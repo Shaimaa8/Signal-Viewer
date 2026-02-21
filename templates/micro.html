@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr"> <head>
+<meta charset="UTF-8">
+<title>Microbiome Signals Viewer</title>
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='style-micro.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="sidebar">
+        <h2>Microbiome Controls</h2>
+
+        <label>Upload Dataset (CSV/TSV)</label>
+        <input type="file" id="fileInput">
+
+        <label>Visualization Type</label>
+        <select id="plotType">
+            <option value="line">Abundance Over Patients</option>
+            <option value="heatmap">Bacteria Profiling Heatmap</option>
+            <option value="polar">Patient Profile Polar</option>
+        </select>
+
+        <label>Patient / Sample</label>
+        <select id="sampleSelector">
+            <option value="">Select Patient</option>
+        </select>
+
+        <div class="btn-group">
+            <button onclick="plotNow()">Plot</button>
+            <button onclick="clearAll()">Clear</button>
+        </div>
+
+        <button onclick="location.href='/'" class="btn-home">
+            🏠 Back to Home
+        </button>
+    </div>
+
+    <div class="content">
+        <div class="card"><h4>Main Viewer</h4><div id="mainPlot"></div></div>
+        <div class="card"><h4>Heatmap Viewer</h4><div id="heatmapPlot"></div></div>
+        <div class="card"><h4>Polar Viewer</h4><div id="polarPlot"></div></div>
+        <div class="card"><h4>Patient Summary</h4>
+            <div id="patientSummary" class="summary-card"></div>
+        </div>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='microbiome (1).js') }}"></script>
+</body>
+</html>

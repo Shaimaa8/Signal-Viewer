@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioSignal AI | Multi-Modal Analysis</title>
+    <style>
+        /* ... الأكواد السابقة كما هي ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: #020c1b;
+            overflow: hidden;
+            color: white;
+        }
+
+        #bgCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 900px; /* قمنا بتوسيع الصندوق قليلاً ليناسب 4 أزرار */
+            padding: 50px;
+            text-align: center;
+            background: rgba(2, 12, 27, 0.9);
+            border-radius: 30px;
+            box-shadow: 0 0 60px rgba(0, 247, 255, 0.2);
+            z-index: 2;
+            border: 1px solid rgba(0, 247, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 56px;
+            color: #00f7ff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(0, 247, 255, 0.5);
+            font-weight: 800;
+        }
+
+        .subtitle {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #8892b0;
+            font-weight: 600;
+        }
+
+        .description {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #ccd6f6;
+            margin-bottom: 45px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: nowrap;
+        }
+
+        .btn-main {
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: capitalize;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 90px;
+        }
+
+        .btn-bio { background: linear-gradient(45deg, #00f7ff, #0072ff); box-shadow: 0 4px 15px rgba(0, 247, 255, 0.3); }
+        .btn-sound { background: linear-gradient(45deg, #a78bfa, #38bdf8); box-shadow: 0 4px 15px rgba(167, 139, 250, 0.3); }
+        .btn-stock { background: linear-gradient(45deg, #22c55e, #10b981); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); }
+
+        /* اللون الجديد لزر الميكروبيوم */
+        .btn-micro {
+            background: linear-gradient(45deg, #f59e0b, #ef4444);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-main:hover {
+            transform: translateY(-5px) scale(1.03);
+            filter: brightness(1.1);
+        }
+
+        span { color: #fff; }
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="container">
+        <h1>Signal Viewer <span>AI</span></h1>
+        <div class="subtitle">Multi-Modal Analysis Dashboard</div>
+        <div class="description">
+            Analyze clinical biomedical data, monitor complex acoustic patterns,
+            predict market movements, or explore microbial diversity with precision.
+        </div>
+
+        <div class="button-group">
+            <button class="btn-main btn-bio" onclick="location.href='/viewer'">
+                Biomedical Analysis
+            </button>
+
+            <button class="btn-main btn-micro" onclick="location.href='/microbiome'">
+                Microbiome Analysis
+            </button>
+
+            <button class="btn-main btn-sound" onclick="location.href='/sound'">
+                Acoustic Signals
+            </button>
+
+            <button class="btn-main btn-stock" onclick="location.href='/stock'">
+                Stock Market Analysis
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ... كود الـ Animation كما هو في ملفك الأصلي ... */
+        const canvas = document.getElementById("bgCanvas");
+        const ctx = canvas.getContext("2d");
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resize();
+        window.addEventListener("resize", resize);
+
+        function ecg(xOffset, yBase) {
+            ctx.strokeStyle = "rgba(0, 255, 204, 0.4)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let x = 0; x < canvas.width; x++) {
+                let t = (x + xOffset) % 200;
+                let y = yBase;
+                if (t < 5) y -= 5;
+                else if (t < 10) y += 20;
+                else if (t < 15) y -= 70;
+                else if (t < 20) y += 40;
+                else y += Math.sin((x + xOffset) / 20) * 2;
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function eeg(xOffset, yBase) {
+            ctx.strokeStyle = "rgba(0, 170, 255, 0.3)";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let x = 0; x < canvas.width; x++) {
+                let noise = Math.sin((x + xOffset) / 8) * 5 + Math.sin((x + xOffset) / 3) * 2 + (Math.random() - 0.5) * 3;
+                ctx.lineTo(x, yBase + noise);
+            }
+            ctx.stroke();
+        }
+
+        let t = 0;
+        function animate() {
+            ctx.fillStyle = "rgba(2, 12, 27, 0.4)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ecg(t, canvas.height * 0.15);
+            eeg(t + 50, canvas.height * 0.35);
+            eeg(t + 100, canvas.height * 0.75);
+            ecg(t + 150, canvas.height * 0.9);
+            t += 2.5;
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

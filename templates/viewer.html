@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioSignal AI Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="logo">BioSignal <span>AI</span></h2>
+            </div>
+
+            <div class="control-group">
+                <label class="section-title">SIGNAL CATEGORY</label>
+                <select id="signalCategory" class="mode-select" style="width: 100%; padding: 8px; border-radius: 6px; background: #1e293b; color: white; border: 1px solid #334155;">
+                    <option value="ecg">ECG (Heart Signal)</option>
+                    <option value="eeg">EEG (Brain Signal)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label class="section-title">DATA SOURCE</label>
+                <input type="file" id="fileInput" accept="*" multiple hidden>
+                <button class="btn-run" style="background: #334155; color: white; width: 100%;" onclick="document.getElementById('fileInput').click()">
+                    Choose Files (CSV, HEA+DAT...)
+                </button>
+            </div>
+
+            <div class="control-group">
+                <label>VIEWING MODE</label>
+                <select id="modeSelect">
+                    <option value="single">Single View Mode</option>
+                    <option value="multi">Multi-Channel Mode</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>MULTI-CHANNEL LAYOUT</label>
+                <select id="layoutStyle" onchange="toggleOverlaySettings()">
+                    <option value="grid">Separate Windows (Grid)</option>
+                    <option value="overlay">Same Window (Overlay)</option>
+                </select>
+            </div>
+
+            <div id="overlaySettings" class="control-group" style="display: none; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #38bdf8; margin-bottom: 15px; max-height: 280px; overflow-y: auto;">
+                <label style="color: #38bdf8; font-size: 11px; font-weight: bold; display: block; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 5px;">
+                    CHANNELS CONFIGURATION
+                </label>
+                <div id="channelsConfigList">
+                    <p style="font-size: 10px; color: #94a3b8; text-align: center;">Select channels to customize</p>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>SELECT CHANNELS (CTRL+CLICK)</label>
+                <select id="channel1Select" multiple style="height: 120px;"></select>
+            </div>
+
+            <div class="control-group">
+                <label>ANALYSIS TYPE</label>
+                <select id="plotType">
+                    <option value="signal">Time-Domain Signal</option>
+                    <option value="polar">Periodic Polar Plot</option>
+                    <option value="recurrence">Poincaré Map (Recurrence)</option>
+                    <option value="xor">XOR Abnormality Detector</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>WINDOW SIZE: <span id="rangeVal">300</span></label>
+                <input type="range" id="timeSlider" min="50" max="2000" value="300">
+            </div>
+
+            <div class="control-group">
+                <label>SPEED: <span id="speedVal">1x</span></label>
+                <input type="range" id="speedSlider" min="1" max="10" value="1" oninput="document.getElementById('speedVal').innerText = this.value + 'x'">
+            </div>
+
+            <div class="action-buttons-grid">
+                <button class="btn-run" onclick="plotNow()" style="width: 100%; background: #38bdf8; color: #0f172a; font-weight: bold;">Visualize</button>
+                <div class="playback-controls" style="display: flex; gap: 5px; margin-top: 10px;">
+                    <button class="btn-play-small" onclick="startPlayback()" style="flex: 1;">▶</button>
+                    <button class="btn-stop-small" onclick="stopPlayback()" style="flex: 1;">■</button>
+                </div>
+            </div>
+
+            <div class="control-group" style="margin-top: 15px;">
+                <button class="btn-secondary" onclick="clearPlots()" style="width: 100%; margin-bottom: 5px;">Clear Dashboard</button>
+                <button class="btn-secondary" onclick="location.href='/'" style="width: 100%;">🏠 Home</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav" style="padding: 10px; background: #0f172a; border-bottom: 1px solid #1e293b;">
+                <div class="ai-status-bar" id="aiStatus" style="color: #38bdf8; font-weight: bold;">
+                    Status: Waiting for Data...
+                </div>
+            </header>
+            <div class="grid-container" id="chartGrid" style="padding: 20px; display: grid; gap: 20px;"></div>
+        </main>
+    </div>
+
+    <script>
+        function toggleOverlaySettings() {
+            const layout = document.getElementById('layoutStyle').value;
+            document.getElementById('overlaySettings').style.display = (layout === 'overlay') ? 'block' : 'none';
+        }
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

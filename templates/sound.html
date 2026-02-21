@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acoustic Signals | BioSignal AI</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* إضافة لمسات خاصة بصفحة الصوت فقط لتجنب أي تداخل */
+        .card-header {
+            padding: 15px 20px;
+            background: rgba(15, 23, 42, 0.4);
+            border-bottom: 1px solid #334155;
+            color: var(--accent);
+            font-weight: 700;
+        }
+        .custom-file-input {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="logo">Acoustic <span>AI</span></h2>
+            </div>
+
+            <div class="control-group">
+                <label class="section-title">Doppler Simulator</label>
+                <label>Velocity (m/s): <span id="velocityValue" style="color:var(--accent);">20</span></label>
+                <input type="range" id="velocity" min="1" max="300" value="20">
+
+                <label>Frequency (Hz): <span id="frequencyValue" style="color:var(--accent);">440</span></label>
+                <input type="range" id="frequency" min="100" max="2000" value="440">
+
+                <button class="btn-run" id="generate" style="margin-top:10px;">Generate Sound</button>
+                <div style="display:flex; gap:5px; margin-top:5px;">
+                    <button class="btn-play-small" id="play" style="flex:1; border:none; border-radius:5px; padding:5px; cursor:pointer; background:var(--accent);">▶ Play</button>
+                    <button class="btn-stop-small" id="pause" style="flex:1; border:none; border-radius:5px; padding:5px; cursor:pointer; background:#ef4444;">⏸ Pause</button>
+                </div>
+            </div>
+
+            <hr style="border-color: #334155; margin: 15px 0;">
+
+            <div class="control-group">
+                <label class="section-title">Drone Detection</label>
+                <input type="file" id="testFile" accept="audio/*" hidden>
+                <button class="btn-secondary" onclick="document.getElementById('testFile').click()" style="width:100%; margin-bottom:10px; background:#334155; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">
+                    Upload Test Sound
+                </button>
+                <button class="btn-run" id="detectDrone">Run Detection</button>
+            </div>
+
+            <div class="control-group" style="margin-top: auto;">
+                <button class="btn-secondary" onclick="location.href='/'" style="width:100%; background:#334155; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">🏠 Back to Home</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="ai-status-bar" id="aiStatus" style="padding:15px; background:#1e293b; border-bottom:1px solid #334155; color:var(--accent); font-weight:bold;">
+                    Acoustic Analysis Ready
+                </div>
+            </header>
+
+            <div class="grid-container" style="padding:25px; display:grid; gap:20px;">
+                <div class="chart-card full-width" style="background:rgba(30, 41, 59, 0.5); border:1px solid #334155; border-radius:16px; overflow:hidden;">
+                    <div class="card-header">
+                        Real Vehicle-Passing Analysis
+                    </div>
+                    <div style="padding: 20px;">
+                        <input type="file" id="audioFile" accept="audio/*" class="custom-file-input" style="color:white; margin-bottom:15px;">
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-run" id="analyze" style="flex:1;">Analyze Velocity</button>
+                            <button class="btn-secondary" id="playFile" style="flex:1; background:#334155; color:white; border:none; border-radius:8px; cursor:pointer;">Play File</button>
+                        </div>
+                        <div id="results" style="margin-top:20px; font-size:18px; line-height:1.6; color:#94a3b8;">
+                            Upload a file to estimate frequency and velocity.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card full-width" style="background:rgba(30, 41, 59, 0.5); border:1px solid #334155; border-radius:16px; overflow:hidden;">
+                    <div class="card-header">
+                        Drone Detection Result
+                    </div>
+                    <div id="droneResults" style="padding: 40px; text-align:center; font-size:24px; color:white;">
+                        Waiting for scan...
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='sound_logic.js') }}"></script>
+</body>
+</html>
