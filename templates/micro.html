@@ -1,53 +1,189 @@
 <!DOCTYPE html>
-<html lang="ar" dir="ltr"> <head>
-<meta charset="UTF-8">
-<title>Microbiome Signals Viewer</title>
-<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
-<link rel="stylesheet" href="{{ url_for('static', filename='style-micro.css') }}">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Microbiome | Clinical Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style-micro.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2 class="sidebar-logo">🔬 BIO-AI</h2>
 
-<div class="container">
+            <a href="/" class="btn-home">🏠 Back to Home</a>
 
-    <div class="sidebar">
-        <h2>Microbiome Controls</h2>
+            <hr>
 
-        <label>Upload Dataset (CSV/TSV)</label>
-        <input type="file" id="fileInput">
+            <div class="upload-section">
+                <label class="stat-label">1. Upload Profiles</label>
+                <input type="file" id="fileInput" onchange="uploadAndGetSamples()">
 
-        <label>Visualization Type</label>
-        <select id="plotType">
-            <option value="line">Abundance Over Patients</option>
-            <option value="heatmap">Bacteria Profiling Heatmap</option>
-            <option value="polar">Patient Profile Polar</option>
-        </select>
+                <label class="stat-label">2. Select Specimen</label>
+                <select id="sampleSelect" disabled>
+                    <option>Waiting for data...</option>
+                </select>
 
-        <label>Patient / Sample</label>
-        <select id="sampleSelector">
-            <option value="">Select Patient</option>
-        </select>
+                <button onclick="analyzeSelected()" id="analyzeBtn" class="btn-primary" disabled>
+                    Run AI Analysis
+                </button>
+            </div>
+        </aside>
 
-        <div class="btn-group">
-            <button onclick="plotNow()">Plot</button>
-            <button onclick="clearAll()">Clear</button>
-        </div>
+        <main class="content">
+            <div class="row">
+                <div class="card">
+                    <div class="stat-label">AI Diagnosis</div>
+                    <div class="stat-val" id="diagResult">--</div>
+                    <div id="confResult" class="stat-sub">Confidence: 0%</div>
+                </div>
+                <div class="card">
+                    <div class="stat-label">Shannon Index</div>
+                    <div class="stat-val" id="shannonVal">--</div>
+                    <div class="stat-sub">Alpha diversity measurement</div>
+                </div>
+                <div class="card">
+                    <div class="stat-label">F/B Ratio</div>
+                    <div class="stat-val" id="fbRatioVal">--</div>
+                    <div class="stat-sub">Phyla level balance</div>
+                </div>
+            </div>
 
-        <button onclick="location.href='/'" class="btn-home">
-            🏠 Back to Home
-        </button>
+            <div class="row">
+                <div class="card card-lg">
+                    <div class="stat-label">Top Taxa Abundance (%)</div>
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+                <div class="card card-md">
+                    <div class="stat-label">Microbial Radar</div>
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+                <div class="card card-sm">
+                    <div class="stat-label">Clinical Levels</div>
+                    <div class="progress-section">
+                        <div class="progress-info">
+                            <span>Beneficial:</span> <span id="benVal" class="text-success">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div id="benBar" class="progress-fill bg-success"></div>
+                        </div>
+
+                        <div class="progress-info mt-4">
+                            <span>Pathogens:</span> <span id="pathVal" class="text-danger">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div id="pathBar" class="progress-fill bg-danger"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="card full-width">
+                    <div class="stat-label mb-4">📋 Clinical Interpretation</div>
+                    <div id="reportArea" class="report-box">
+                        Ready for analysis. Please upload a TSV file...
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <div class="content">
-        <div class="card"><h4>Main Viewer</h4><div id="mainPlot"></div></div>
-        <div class="card"><h4>Heatmap Viewer</h4><div id="heatmapPlot"></div></div>
-        <div class="card"><h4>Polar Viewer</h4><div id="polarPlot"></div></div>
-        <div class="card"><h4>Patient Summary</h4>
-            <div id="patientSummary" class="summary-card"></div>
-        </div>
-    </div>
+    <script>
+        let barChart, radarChart;
 
-</div>
+        async function uploadAndGetSamples() {
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files[0]) return;
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
 
-<script src="{{ url_for('static', filename='microbiome (1).js') }}"></script>
+            try {
+                const response = await fetch('/micro_upload', { method: 'POST', body: formData });
+                const data = await response.json();
+                const select = document.getElementById('sampleSelect');
+                select.innerHTML = '';
+                data.samples.forEach(s => {
+                    let opt = document.createElement('option');
+                    opt.value = s; opt.text = s;
+                    select.appendChild(opt);
+                });
+                select.disabled = false;
+                document.getElementById('analyzeBtn').disabled = false;
+            } catch (err) {
+                alert("Upload failed.");
+            }
+        }
+
+        async function analyzeSelected() {
+            const sampleId = document.getElementById('sampleSelect').value;
+            try {
+                const response = await fetch('/analyze_micro_sample', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sample_id: sampleId})
+                });
+                const data = await response.json();
+
+                document.getElementById('diagResult').innerText = data.diagnosis;
+                document.getElementById('confResult').innerText = "Confidence: " + data.confidence;
+                document.getElementById('shannonVal').innerText = data.shannon_index;
+                document.getElementById('fbRatioVal').innerText = data.fb_ratio;
+                document.getElementById('benVal').innerText = data.ben_percent + "%";
+                document.getElementById('benBar').style.width = data.ben_percent + "%";
+                document.getElementById('pathVal').innerText = data.path_percent + "%";
+                document.getElementById('pathBar').style.width = data.path_percent + "%";
+                document.getElementById('reportArea').innerHTML = data.report;
+
+                updateCharts(data.chartData);
+            } catch (err) {
+                alert("Analysis failed.");
+            }
+        }
+
+        function updateCharts(data) {
+            if (barChart) barChart.destroy();
+            if (radarChart) radarChart.destroy();
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            };
+
+            barChart = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{ label: 'Relative Abundance', data: data.values, backgroundColor: '#38bdf8' }]
+                },
+                options: commonOptions
+            });
+
+            radarChart = new Chart(document.getElementById('radarChart'), {
+                type: 'radar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{ data: data.values, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.2)' }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        r: {
+                            grid: { color: '#334155' },
+                            ticks: { display: false },
+                            pointLabels: { font: { size: 10 }, color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
