@@ -1,0 +1,14 @@
+{
+  "0": "stock/AAPL.csv",
+  "1": "stock/nifty_data.csv",
+  "2": "stock/nvda_data.csv",
+  "3": "stock/tsla_data.csv",
+  "4": "currency/BTCUSD_data.csv",
+  "5": "currency/EGPUSD_data.csv",
+  "6": "currency/EURUSD_data.csv",
+  "7": "currency/GBPUSD_data.csv",
+  "8": "mineral/Copper_data.csv",
+  "9": "mineral/gold_data.csv",
+  "10": "mineral/oil_data.csv",
+  "11": "mineral/silver_data.csv"
+}
