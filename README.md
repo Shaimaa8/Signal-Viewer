@@ -28,13 +28,6 @@
 
 **Signal Viewer AI** is an integrated web-based platform for analyzing four distinct types of signals using state-of-the-art deep learning models and classic signal processing algorithms. The platform provides real-time visualization, AI-powered classification, and comparative analysis across multiple domains.
 
-| Module | Signals | AI Models | Accuracy |
-|--------|---------|-----------|----------|
-| 🫀 Medical | ECG, EEG | HuBERT + Classifier | 92.3% |
-| 🦠 Microbiome | Taxonomic Profiles | Random Forest | 87.5% |
-| 📈 Trading | Stocks, Currencies, Minerals | Global LSTM | 85.1% |
-| 🔊 Acoustic | Vehicle, Drone Sounds | Classic Algorithms | N/A |
-
 ---
 
 ## ✨ Key Features
