@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,9 +9,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="dashboard-container">
-        <!-- Sidebar -->
+        <!-- Sidebar (Left Panel) -->
         <aside class="sidebar">
             <div class="logo">BioSignal <span>AI</span></div>
 
@@ -22,13 +24,44 @@
                 <button class="category-btn" onclick="changeCategory('mineral')">⛏ Mineral</button>
             </div>
 
-            <!-- SELECT ASSET -->
-            <div class="section-title">SELECT A $ SET</div>
-            <select id="assetSelect" onchange="onAssetChange()"></select>
+            <!-- UPLOAD CSV FILE -->
+            <div class="section-title">UPLOAD CSV FILE</div>
+            <div class="data-source">
+                <div class="data-type" id="data-type-display">📊 STOCK MARKET</div>
 
-            <!-- QUICK SYMBOLS -->
-            <div class="section-title">QUICK SYMBOLS</div>
-            <div class="quick-symbols" id="quickSymbols"></div>
+                <div class="file-input" style="margin-top: 10px;">
+                    <input type="text" id="filename" placeholder="Choose CSV file..." readonly>
+                    <button onclick="document.getElementById('file-upload').click()">Browse</button>
+                    <input type="file" id="file-upload" accept=".csv" style="display: none;"
+                        onchange="handleFileUpload(this)">
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 15px;">
+                    <button class="load-btn" style="flex: 1;" onclick="loadUploadedFile()">
+                        📂 LOAD DATA
+                    </button>
+                </div>
+
+                <button class="display-btn" onclick="displaySignal()" style="margin-top: 15px;">
+                    📈 DISPLAY SIGNAL
+                </button>
+            </div>
+
+            <!-- FILE INFO (appears after upload) -->
+            <div id="file-info" style="display: none;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <span style="color: var(--text-secondary);">File:</span>
+                    <span id="info-filename" style="color: var(--accent);">-</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 5px;">
+                    <span style="color: var(--text-secondary);">Points:</span>
+                    <span id="info-points" style="color: var(--accent);">-</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 5px;">
+                    <span style="color: var(--text-secondary);">Date range:</span>
+                    <span id="info-dates" style="color: var(--accent);">-</span>
+                </div>
+            </div>
 
             <!-- VIEW MODE (SINGLE/MULTI) -->
             <div class="section-title">VIEW MODE</div>
@@ -37,26 +70,40 @@
                 <button class="viewer-type-btn" onclick="changeViewMode('multi')">MULTI</button>
             </div>
 
-            <!-- CHART TYPE (بيتغير حسب الفئة) -->
+            <!-- DISPLAY MODE (STATIC/OVER TIME) -->
+            <div class="section-title">DISPLAY MODE</div>
+            <div class="viewer-type" style="margin-bottom: 15px;">
+                <button class="mode-btn active" onclick="toggleDisplayMode('static')">📊 STATIC</button>
+                <button class="mode-btn" onclick="toggleDisplayMode('overtime')">⏵ OVER TIME</button>
+            </div>
+
+            <!-- CHART TYPE (changes by category) -->
             <div class="section-title">CHART TYPE</div>
             <select id="chartTypeSelect" onchange="onChartTypeChange()"></select>
 
             <!-- WINDOW SIZE -->
             <div class="section-title">WINDOW SIZE: <span id="windowSizeVal">300</span></div>
-            <input type="range" id="windowSize" min="50" max="1000" value="300" 
-                   oninput="document.getElementById('windowSizeVal').innerText = this.value">
+            <input type="range" id="windowSize" min="50" max="1000" value="300"
+                oninput="document.getElementById('windowSizeVal').innerText = this.value">
 
-            <!-- PREDICTION BUTTON -->
-            <button class="prediction-btn" onclick="togglePrediction()">
-                📈 Predict Future Behavior
-            </button>
+            <!-- PREDICTION SECTION -->
+            <div class="section-title">PREDICTION</div>
+            <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <label style="color: var(--text-secondary);">Forecast Days:</label>
+                    <input type="number" id="forecastDays" value="30" min="5" max="365"
+                        style="width: 80px; background: var(--sidebar-bg); border: 1px solid var(--border); color: var(--text); padding: 5px; border-radius: 4px;">
+                </div>
+                <button class="prediction-btn" onclick="runPrediction()">
+                    📈 Predict Future Behavior
+                </button>
+            </div>
 
             <!-- ACTION BUTTONS -->
-            <button class="btn-run" onclick="loadAndDisplay()">📊 DISPLAY SIGNAL</button>
             <button class="btn-secondary" onclick="clearAll()">🗑 Clear All</button>
         </aside>
 
-        <!-- Main Content -->
+        <!-- Main Content (Middle Panel) -->
         <main class="main-content">
             <!-- AI Status Bar -->
             <div class="ai-status-bar" id="aiStatus">
@@ -77,15 +124,15 @@
     </div>
 
     <script>
-        // ==================== المتغيرات العامة ====================
+        // ==================== GLOBAL VARIABLES ====================
         let currentCategory = 'stock';
-        let currentAsset = 'AAPL';
-        let viewMode = 'single';  // 'single' or 'multi'
+        let viewMode = 'single';
+        let displayMode = 'static'; // 'static' or 'overtime'
         let chartData = null;
         let animations = {};
-        let categoriesData = {};
+        let animationPositions = {};
+        let predictionColors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
 
-        // Charts types لكل فئة
         const chartTypes = {
             stock: [
                 { value: 'candlestick', name: 'Candlestick + Volume' },
@@ -107,63 +154,44 @@
             ]
         };
 
-        // ==================== التهيئة ====================
-        window.onload = function() {
-            loadCategories();
+        // ==================== INITIALIZATION ====================
+        window.onload = function () {
+            updateChartTypes(currentCategory);
+            updateCategoryDisplay(currentCategory);
+            showWelcomeMessage();
         };
 
-        function loadCategories() {
-            fetch('/api/categories')
-                .then(res => res.json())
-                .then(data => {
-                    categoriesData = data;
-                    loadAssets('stock');
-                    updateQuickSymbols('stock');
-                    updateChartTypes('stock');
-                })
-                .catch(err => {
-                    console.error('Failed to load categories:', err);
-                    document.getElementById('aiStatus').innerHTML = '❌ Failed to connect to server';
-                });
+        function showWelcomeMessage() {
+            const grid = document.getElementById('chartGrid');
+            grid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--text-secondary);">
+                    <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
+                    <h3>No Signal Displayed</h3>
+                    <p>Upload a CSV file and click DISPLAY SIGNAL to view data</p>
+                </div>
+            `;
         }
 
-        // ==================== إدارة الأصول ====================
-        function loadAssets(category) {
-            const select = document.getElementById('assetSelect');
-            select.innerHTML = '';
-            
-            if (!categoriesData[category]) return;
-            
-            categoriesData[category].forEach(asset => {
-                const option = document.createElement('option');
-                option.value = asset.symbol;
-                option.textContent = `${asset.display} - ${asset.name}`;
-                select.appendChild(option);
+        function updateCategoryDisplay(category) {
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(category)) {
+                    btn.classList.add('active');
+                }
             });
-            
-            currentAsset = categoriesData[category][0]?.symbol || 'AAPL';
-        }
 
-        function updateQuickSymbols(category) {
-            const container = document.getElementById('quickSymbols');
-            container.innerHTML = '';
-            
-            if (!categoriesData[category]) return;
-            
-            const symbols = categoriesData[category].slice(0, 6);
-            symbols.forEach(asset => {
-                const btn = document.createElement('button');
-                btn.className = 'symbol-btn';
-                btn.textContent = asset.display;
-                btn.onclick = () => quickSymbol(asset.symbol, category);
-                container.appendChild(btn);
-            });
+            const typeMap = {
+                stock: '📊 STOCK MARKET',
+                currency: '💱 CURRENCY',
+                mineral: '⛏ MINERAL'
+            };
+            document.getElementById('data-type-display').textContent = typeMap[category];
         }
 
         function updateChartTypes(category) {
             const select = document.getElementById('chartTypeSelect');
             select.innerHTML = '';
-            
+
             chartTypes[category].forEach(type => {
                 const option = document.createElement('option');
                 option.value = type.value;
@@ -172,41 +200,25 @@
             });
         }
 
-        // ==================== Event Handlers ====================
+        // ==================== EVENT HANDLERS ====================
         function changeCategory(category) {
             currentCategory = category;
-            
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            loadAssets(category);
-            updateQuickSymbols(category);
+            updateCategoryDisplay(category);
             updateChartTypes(category);
-            
-            // لو في بيانات محملة، نعرضها تاني
-            if (chartData) {
-                loadAndDisplay();
-            }
+            document.getElementById('file-info').style.display = 'none';
+            chartData = null;
         }
 
         function changeViewMode(mode) {
             viewMode = mode;
-            
             document.querySelectorAll('.viewer-type-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
-            
+
             if (chartData) {
                 displaySignal();
             }
-        }
-
-        function onAssetChange() {
-            const select = document.getElementById('assetSelect');
-            currentAsset = select.value;
         }
 
         function onChartTypeChange() {
@@ -215,120 +227,118 @@
             }
         }
 
-        function quickSymbol(symbol, category) {
-            currentCategory = category;
-            currentAsset = symbol;
-            
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.toLowerCase().includes(
-                    category === 'mineral' ? 'mineral' : 
-                    category === 'currency' ? 'currency' : 'stock'
-                )) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            loadAssets(category);
-            updateQuickSymbols(category);
-            updateChartTypes(category);
-            
-            setTimeout(loadAndDisplay, 200);
+        // ==================== FILE UPLOAD FUNCTIONS ====================
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                document.getElementById('filename').value = file.name;
+            }
         }
 
-        // ==================== تحميل وعرض البيانات ====================
-        function loadAndDisplay() {
-            document.getElementById('aiStatus').innerHTML = '⏳ Loading data...';
-            
-            fetch(`/api/data/${currentCategory}/${currentAsset}`)
+        function loadUploadedFile() {
+            const fileInput = document.getElementById('file-upload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            document.getElementById('aiStatus').innerHTML = '⏳ Loading file...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', currentCategory);
+
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) {
-                        document.getElementById('aiStatus').innerHTML = `❌ Error: ${data.error}`;
-                        console.error('Data error:', data.error);
+                        document.getElementById('aiStatus').innerHTML = `❌ ${data.error}`;
                         return;
                     }
-                    
-                    if (!data.prices || !data.prices.close) {
-                        document.getElementById('aiStatus').innerHTML = '❌ No price data available';
-                        return;
-                    }
-                    
+
                     chartData = data;
-                    document.getElementById('aiStatus').innerHTML = 
-                        `✅ Loaded ${data.symbol} - ${data.count} data points`;
-                    
-                    displaySignal();
+
+                    document.getElementById('info-filename').textContent = file.name;
+                    document.getElementById('info-points').textContent = data.count || data.prices?.close?.length || '-';
+
+                    if (data.dates && data.dates.length > 0) {
+                        const firstDate = data.dates[0];
+                        const lastDate = data.dates[data.dates.length - 1];
+                        document.getElementById('info-dates').textContent = `${firstDate} to ${lastDate}`;
+                    }
+
+                    document.getElementById('file-info').style.display = 'block';
+                    document.getElementById('aiStatus').innerHTML = `✅ Loaded ${file.name}`;
                 })
                 .catch(err => {
-                    document.getElementById('aiStatus').innerHTML = '❌ Failed to load data';
-                    console.error('Fetch error:', err);
+                    document.getElementById('aiStatus').innerHTML = '❌ Failed to load file';
                 });
         }
 
+        // ==================== DISPLAY SIGNAL ====================
         function displaySignal() {
             if (!chartData) {
-                console.error('No chart data available');
-                document.getElementById('aiStatus').innerHTML = '❌ No data to display';
+                alert('Please load a file first');
                 return;
-            }            
-            console.log('Displaying signal with dates:', chartData.dates.slice(0, 5));
-            console.log('First few prices:', chartData.prices.close.slice(0, 5));
-            console.log('DISPLAY SIGNAL CALLED');
-            console.log('Chart Data:', chartData);
-            console.log('Dates sample:', chartData.dates?.slice(0, 3));
-            console.log('Prices sample:', chartData.prices?.close?.slice(0, 3));
-                                
+            }
+
             const grid = document.getElementById('chartGrid');
             const chartType = document.getElementById('chartTypeSelect').value;
-            
+
             grid.innerHTML = '';
-            
+
             if (viewMode === 'single') {
-                // SINGLE MODE - رسمة واحدة كبيرة
                 grid.className = 'grid-container';
-                
+                grid.style.gridTemplateColumns = '1fr';
                 const card = createChartCard('main', chartType, true);
                 grid.appendChild(card);
-                
+
                 setTimeout(() => {
-                    renderChart('main', chartType, chartData);
+                    const prediction = chartData.predictions ? chartData.predictions['main'] : null;
+                    renderChart('main', chartType, chartData, prediction);
                 }, 100);
-                
             } else {
-                // MULTI MODE - 4 رسوم
                 grid.className = 'grid-container multi-view';
-                
-                // نجيب أول 4 أنواع من الـ chart types
+                grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+
                 const types = chartTypes[currentCategory].map(t => t.value).slice(0, 4);
-                
+
                 types.forEach((type, i) => {
-                    const card = createChartCard(`chart_${i}`, type, false);
+                    const divId = `chart_${i}`;
+                    const card = createChartCard(divId, type, false);
                     grid.appendChild(card);
-                    
+
                     setTimeout(() => {
-                        renderChart(`chart_${i}`, type, chartData);
+                        const prediction = chartData.predictions ? chartData.predictions[divId] : null;
+                        renderChart(divId, type, chartData, prediction);
                     }, 100 * (i + 1));
                 });
             }
-            
-            // تحديث السعر الحالي
+
             if (chartData.prices && chartData.prices.close) {
-                const lastPrice = chartData.prices.close[chartData.prices.close.length - 1];
-                const firstPrice = chartData.prices.close[0];
-                const change = ((lastPrice - firstPrice) / firstPrice * 100).toFixed(2);
-                
-                document.getElementById('currentPrice').innerHTML = 
-                    `Current: $${lastPrice.toFixed(2)} (${change}%)`;
+                const prices = chartData.prices.close;
+                const lastPrice = prices[prices.length - 1];
+                document.getElementById('currentPrice').innerHTML = `Current: $${lastPrice.toFixed(2)}`;
             }
         }
 
+        // ==================== CREATE CHART CARD ====================
         function createChartCard(id, chartType, isSingle) {
             const card = document.createElement('div');
             card.className = isSingle ? 'chart-card single' : 'chart-card multi';
             card.id = `card-${id}`;
-            
-            // اسم الرسمة
+
+            if (isSingle) {
+                card.style.height = '600px';
+            } else {
+                card.style.height = '400px';
+            }
+
             let typeName = chartType;
             for (const [cat, types] of Object.entries(chartTypes)) {
                 const found = types.find(t => t.value === chartType);
@@ -337,46 +347,48 @@
                     break;
                 }
             }
-            
+
+            const fullTitle = chartData ?
+                `${chartData.symbol} - ${typeName}` :
+                typeName || chartType.toUpperCase();
+
+            const modeIndicator = displayMode === 'overtime' ?
+                '<span style="color: #fbbf24; margin-left: 10px;">⏵ Live</span>' : '';
+
             card.innerHTML = `
                 <div class="card-header">
-                    <span>${typeName || chartType.toUpperCase()}</span>
+                    <span style="color: var(--accent); font-weight: 600; font-size: 0.9rem;">
+                        ${fullTitle} ${modeIndicator}
+                    </span>
                     <div class="card-controls">
                         <button class="play-btn-small" onclick="toggleAnimation('${id}')">▶</button>
                     </div>
                 </div>
-                <div id="${id}" class="chart-container"></div>
+                <div id="${id}" class="chart-container" style="width: 100%; height: calc(100% - 40px);"></div>
             `;
-            
+
             return card;
         }
 
-        // ==================== دوال الرسم ====================
-        function renderChart(divId, type, data) {
-            console.log(`Rendering chart in ${divId}, type: ${type}`);
-            
-            if (!data) {
-                console.error('No data provided to renderChart');
+        // ==================== RENDER CHART ====================
+        function renderChart(divId, type, data, predictionData = null) {
+            if (!data || !data.prices) {
                 document.getElementById(divId).innerHTML = '<div style="color: red; padding: 20px;">No data</div>';
                 return;
             }
-            
-            if (!data.prices) {
-                console.error('No prices in data');
+
+            let dates = data.dates || [];
+            if (dates.length === 0) {
+                dates = Array.from({ length: data.prices.close?.length || 0 }, (_, i) => `Day ${i + 1}`);
+            }
+
+            let closePrices = data.prices.close || [];
+
+            if (closePrices.length === 0) {
                 document.getElementById(divId).innerHTML = '<div style="color: red; padding: 20px;">No price data</div>';
                 return;
             }
-            
-            // التأكد من وجود dates
-            let dates = data.dates || [];
-            if (dates.length === 0) {
-                // لو مفيش تواريخ، استخدم index
-                dates = Array.from({length: data.prices.close?.length || 0}, (_, i) => `Day ${i+1}`);
-            }
-            
-            console.log(`Dates length: ${dates.length}`);
-            console.log(`Close prices length: ${data.prices.close?.length}`);
-            
+
             let traces = [];
             let layout = {
                 paper_bgcolor: '#1e293b',
@@ -384,23 +396,23 @@
                 font: { color: '#f1f5f9', size: 10 },
                 margin: { l: 50, r: 50, t: 50, b: 50 },
                 showlegend: true,
-                legend: { 
+                legend: {
                     font: { size: 9 },
                     orientation: 'h',
                     y: 1.1,
                     x: 0.5,
                     xanchor: 'center'
                 },
-                xaxis: { 
+                xaxis: {
                     title: 'Date',
-                    gridcolor: '#334155', 
+                    gridcolor: '#334155',
                     color: '#94a3b8',
                     tickfont: { size: 9 },
                     rangeslider: { visible: false }
                 },
-                yaxis: { 
+                yaxis: {
                     title: 'Price ($)',
-                    gridcolor: '#334155', 
+                    gridcolor: '#334155',
                     color: '#94a3b8',
                     tickfont: { size: 9 }
                 },
@@ -409,49 +421,46 @@
                     font: { color: '#f1f5f9', size: 12 }
                 }
             };
-            
+
             // ===== STOCK CHARTS =====
             if (type === 'candlestick') {
                 if (data.prices.open && data.prices.high && data.prices.low && data.prices.close) {
-                    console.log('Drawing candlestick...');
-                    
-                    // Candlestick
+                    const minLen = Math.min(
+                        data.prices.open.length,
+                        data.prices.high.length,
+                        data.prices.low.length,
+                        data.prices.close.length,
+                        dates.length
+                    );
+
                     traces.push({
-                        x: dates,
-                        open: data.prices.open,
-                        high: data.prices.high,
-                        low: data.prices.low,
-                        close: data.prices.close,
+                        x: dates.slice(0, minLen),
+                        open: data.prices.open.slice(0, minLen),
+                        high: data.prices.high.slice(0, minLen),
+                        low: data.prices.low.slice(0, minLen),
+                        close: data.prices.close.slice(0, minLen),
                         type: 'candlestick',
                         name: data.symbol || 'Price',
-                        increasing: { 
-                            line: { color: '#22c55e' },
-                            fillcolor: '#22c55e'
-                        },
-                        decreasing: { 
-                            line: { color: '#ef4444' },
-                            fillcolor: '#ef4444'
-                        },
-                        yaxis: 'y',
+                        increasing: { line: { color: '#22c55e' }, fillcolor: '#22c55e' },
+                        decreasing: { line: { color: '#ef4444' }, fillcolor: '#ef4444' },
                         showlegend: true
                     });
-                    
-                    // Volume
+
                     if (data.prices.volume) {
                         traces.push({
-                            x: dates,
-                            y: data.prices.volume,
+                            x: dates.slice(0, minLen),
+                            y: data.prices.volume.slice(0, minLen),
                             type: 'bar',
                             name: 'Volume',
                             yaxis: 'y2',
                             marker: {
-                                color: data.prices.close.map((c, i) => 
-                                    c > (data.prices.open[i] || c) ? '#22c55e80' : '#ef444480'
+                                color: data.prices.close.slice(0, minLen).map((c, i) =>
+                                    c > data.prices.open[i] ? '#22c55e80' : '#ef444480'
                                 )
                             },
                             showlegend: true
                         });
-                        
+
                         layout.yaxis2 = {
                             title: 'Volume',
                             overlaying: 'y',
@@ -460,15 +469,12 @@
                             color: '#94a3b8',
                             domain: [0, 0.25]
                         };
-                        
                         layout.yaxis.domain = [0.3, 1];
                     }
                 } else {
-                    // Fallback to line chart
-                    console.log('Candlestick data missing, using line chart');
                     traces.push({
                         x: dates,
-                        y: data.prices.close || [],
+                        y: closePrices,
                         type: 'scatter',
                         mode: 'lines',
                         name: 'Close',
@@ -477,10 +483,9 @@
                 }
             }
             else if (type === 'standard' || type === 'line') {
-                // Line Chart
                 traces.push({
                     x: dates,
-                    y: data.prices.close || [],
+                    y: closePrices,
                     type: 'scatter',
                     mode: 'lines',
                     name: 'Close',
@@ -488,20 +493,18 @@
                 });
             }
             else if (type === 'ma_overlay') {
-                // MA Overlay
-                const close = data.prices.close || [];
-                const ma20 = calculateMA(close, 20);
-                const ma50 = calculateMA(close, 50);
-                
+                const ma20 = calculateMA(closePrices, 20);
+                const ma50 = calculateMA(closePrices, 50);
+
                 traces.push({
                     x: dates,
-                    y: close,
+                    y: closePrices,
                     type: 'scatter',
                     mode: 'lines',
                     name: 'Close',
                     line: { color: '#38bdf8', width: 1.5 }
                 });
-                
+
                 traces.push({
                     x: dates,
                     y: ma20,
@@ -510,7 +513,7 @@
                     name: 'MA 20',
                     line: { color: '#fbbf24', width: 2 }
                 });
-                
+
                 traces.push({
                     x: dates,
                     y: ma50,
@@ -521,12 +524,10 @@
                 });
             }
             else if (type === 'comparison') {
-                // Percentage Change
-                const close = data.prices.close || [];
-                if (close.length > 0) {
-                    const base = close[0];
-                    const pctChange = close.map(v => ((v - base) / base * 100));
-                    
+                if (closePrices.length > 0) {
+                    const base = closePrices[0];
+                    const pctChange = closePrices.map(v => ((v - base) / base * 100));
+
                     traces.push({
                         x: dates,
                         y: pctChange,
@@ -537,29 +538,26 @@
                         fill: 'tozeroy',
                         fillcolor: 'rgba(56, 189, 248, 0.2)'
                     });
-                    
+
                     layout.yaxis.title = 'Change (%)';
                 }
             }
-            
-            // ===== CURRENCY CHARTS =====
             else if (type === 'bollinger') {
-                const close = data.prices.close || [];
-                const ma20 = calculateMA(close, 20);
-                const std = calculateSTD(close, 20);
-                
+                const ma20 = calculateMA(closePrices, 20);
+                const std = calculateSTD(closePrices, 20);
+
                 const upper = ma20.map((m, i) => m + 2 * (std[i] || 0));
                 const lower = ma20.map((m, i) => m - 2 * (std[i] || 0));
-                
+
                 traces.push({
                     x: dates,
-                    y: close,
+                    y: closePrices,
                     type: 'scatter',
                     mode: 'lines',
                     name: 'Close',
                     line: { color: '#38bdf8', width: 1.5 }
                 });
-                
+
                 traces.push({
                     x: dates,
                     y: ma20,
@@ -568,7 +566,7 @@
                     name: 'MA 20',
                     line: { color: '#fbbf24', width: 2 }
                 });
-                
+
                 traces.push({
                     x: dates,
                     y: upper,
@@ -577,7 +575,7 @@
                     name: 'Upper Band',
                     line: { color: '#94a3b8', width: 1, dash: 'dash' }
                 });
-                
+
                 traces.push({
                     x: dates,
                     y: lower,
@@ -590,15 +588,14 @@
                 });
             }
             else if (type === 'volatility') {
-                const close = data.prices.close || [];
                 const returns = [];
-                for (let i = 1; i < close.length; i++) {
-                    returns.push(Math.log(close[i] / close[i-1]) * 100);
+                for (let i = 1; i < closePrices.length; i++) {
+                    returns.push(Math.log(closePrices[i] / closePrices[i - 1]) * 100);
                 }
-                
+
                 const vol = calculateSTD(returns, 20);
                 const volDates = dates.slice(20);
-                
+
                 traces.push({
                     x: volDates,
                     y: vol.slice(20),
@@ -609,25 +606,22 @@
                     fill: 'tozeroy',
                     fillcolor: 'rgba(251, 113, 133, 0.2)'
                 });
-                
+
                 layout.yaxis.title = 'Volatility (%)';
             }
-            
-            // ===== MINERAL CHARTS =====
             else if (type === 'ma_50_200') {
-                const close = data.prices.close || [];
-                const ma50 = calculateMA(close, 50);
-                const ma200 = calculateMA(close, 200);
-                
+                const ma50 = calculateMA(closePrices, 50);
+                const ma200 = calculateMA(closePrices, 200);
+
                 traces.push({
                     x: dates,
-                    y: close,
+                    y: closePrices,
                     type: 'scatter',
                     mode: 'lines',
                     name: 'Close',
                     line: { color: '#94a3b8', width: 1 }
                 });
-                
+
                 traces.push({
                     x: dates,
                     y: ma50,
@@ -636,7 +630,7 @@
                     name: 'MA 50',
                     line: { color: '#fbbf24', width: 2 }
                 });
-                
+
                 traces.push({
                     x: dates,
                     y: ma200,
@@ -647,28 +641,27 @@
                 });
             }
             else if (type === 'seasonality') {
-                // Seasonality by month
                 const monthData = {};
                 dates.forEach((date, i) => {
-                    if (i < (data.prices.close?.length || 0)) {
+                    if (i < closePrices.length) {
                         let month;
                         if (date.includes('-')) {
-                            month = date.split('-')[1]; // YYYY-MM-DD
+                            month = date.split('-')[1];
                         } else {
                             month = Math.floor(i / 30) % 12 + 1;
                         }
-                        
+
                         if (!monthData[month]) monthData[month] = [];
-                        monthData[month].push(data.prices.close[i]);
+                        monthData[month].push(closePrices[i]);
                     }
                 });
-                
+
                 const months = Object.keys(monthData).sort();
                 const avgByMonth = months.map(m => {
                     const vals = monthData[m];
                     return vals.reduce((a, b) => a + b, 0) / vals.length;
                 });
-                
+
                 traces.push({
                     x: months.map(m => {
                         const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -680,51 +673,94 @@
                     marker: { color: '#38bdf8' }
                 });
             }
-            
-            // ===== FALLBACK =====
-            if (traces.length === 0) {
-                console.log('No traces created, using fallback line chart');
+
+            // Add prediction ONLY for line charts (standard, ma_overlay, comparison, bollinger, volatility, ma_50_200)
+            // NOT for candlestick or seasonality
+            if (predictionData && (type === 'standard' || type === 'line' || type === 'ma_overlay' ||
+                type === 'comparison' || type === 'bollinger' || type === 'volatility' || type === 'ma_50_200')) {
+
+                let colorIndex = 0;
+                if (divId.includes('chart_')) {
+                    const num = parseInt(divId.split('_')[1]) || 0;
+                    colorIndex = num % predictionColors.length;
+                }
+
+                const predColor = predictionColors[colorIndex];
+
                 traces.push({
-                    x: dates,
-                    y: data.prices.close || [],
+                    x: predictionData.dates,
+                    y: predictionData.forecast,
                     type: 'scatter',
                     mode: 'lines',
-                    name: 'Close',
-                    line: { color: '#38bdf8', width: 2 }
+                    name: `Forecast (${predictionData.dates.length} days)`,
+                    line: { color: predColor, width: 3, dash: 'dash' }
+                });
+
+                const confDates = predictionData.dates.concat(predictionData.dates.slice().reverse());
+                const confValues = predictionData.upper.concat(predictionData.lower.slice().reverse());
+
+                traces.push({
+                    x: confDates,
+                    y: confValues,
+                    fill: 'toself',
+                    fillcolor: predColor + '20',
+                    line: { color: 'transparent' },
+                    name: '95% Confidence',
+                    type: 'scatter'
                 });
             }
-            
-            console.log(`Created ${traces.length} traces`);
-            
-            // رسم الرسم البياني
+
+            // Set range based on display mode
+            if (displayMode === 'overtime') {
+                const totalPoints = dates.length;
+                const windowSize = Math.min(100, totalPoints);
+                if (totalPoints > 0) {
+                    layout.xaxis.range = [dates[totalPoints - windowSize], dates[totalPoints - 1]];
+                }
+            } else {
+                layout.xaxis.autorange = true;
+                layout.yaxis.autorange = true;
+            }
+
             try {
-                Plotly.newPlot(divId, traces, layout, { 
+                Plotly.newPlot(divId, traces, layout, {
                     responsive: true,
                     displayModeBar: true,
                     displaylogo: false
                 });
-                console.log(`Successfully plotted in ${divId}`);
             } catch (error) {
                 console.error('Plotly error:', error);
-                document.getElementById(divId).innerHTML = `<div style="color: red; padding: 20px;">Error: ${error.message}</div>`;
             }
         }
-        // ==================== Helper Functions ====================
-        function calculateMA(data, window) {
-            const result = [];
-            for (let i = 0; i < data.length; i++) {
-                if (i < window - 1) {
-                    result.push(null);
-                } else {
-                    let sum = 0;
-                    for (let j = 0; j < window; j++) {
-                        sum += data[i - j];
-                    }
-                    result.push(sum / window);
+
+        // ==================== HELPER FUNCTIONS ====================
+
+function calculateMA(data, window) {
+    const result = [];
+    for (let i = 0; i < data.length; i++) {
+        if (i < window - 1) {
+            result.push(null);
+        } else {
+            let sum = 0;
+            let count = 0;
+            for (let j = 0; j < window; j++) {
+                const val = data[i - j];
+                if (val !== null && !isNaN(val)) {
+                    sum += val;
+                    count++;
                 }
             }
-            return result;
+            // تجنب القسمة على صفر
+            if (count > 0) {
+                result.push(sum / count);
+            } else {
+                result.push(null);
+            }
         }
+    }
+    return result;
+}
+
 
         function calculateSTD(data, window) {
             const result = [];
@@ -737,7 +773,7 @@
                         sum += data[i - j];
                     }
                     const mean = sum / window;
-                    
+
                     let sqSum = 0;
                     for (let j = 0; j < window; j++) {
                         sqSum += Math.pow(data[i - j] - mean, 2);
@@ -748,25 +784,104 @@
             return result;
         }
 
-        // ==================== Animation Controls ====================
-        function toggleAnimation(divId) {
-            const btn = event.target;
-            
-            if (animations[divId]) {
-                clearInterval(animations[divId]);
-                delete animations[divId];
-                btn.innerHTML = '▶';
-            } else {
-                let pos = 0;
-                animations[divId] = setInterval(() => {
-                    pos += 5;
-                    Plotly.relayout(divId, {
-                        'xaxis.range': [pos, pos + 100]
-                    });
-                }, 50);
-                btn.innerHTML = '⏸';
+        // ==================== PREDICTION ====================
+        function runPrediction() {
+            if (!chartData || !chartData.prices || !chartData.prices.close) {
+                alert('Please load data first');
+                return;
             }
+
+            const days = document.getElementById('forecastDays').value;
+            const lastDate = chartData.dates[chartData.dates.length - 1];
+
+            document.getElementById('aiStatus').innerHTML = '⏳ Running LSTM prediction...';
+
+            fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prices: chartData.prices.close,
+                    dates: chartData.dates,
+                    days: parseInt(days),
+                    last_date: lastDate
+                })
+            })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.error) {
+                        document.getElementById('aiStatus').innerHTML = `❌ ${result.error}`;
+                        return;
+                    }
+
+                    if (!chartData.predictions) {
+                        chartData.predictions = {};
+                    }
+
+                    if (viewMode === 'single') {
+                        chartData.predictions['main'] = result;
+                        updateSingleChart();
+                    } else {
+                        const types = chartTypes[currentCategory].map(t => t.value).slice(0, 4);
+                        types.forEach((type, i) => {
+                            chartData.predictions[`chart_${i}`] = result;
+                        });
+                        updateMultiCharts();
+                    }
+
+                    document.getElementById('aiStatus').innerHTML = `✅ Prediction added to line charts only`;
+                })
+                .catch(err => {
+                    document.getElementById('aiStatus').innerHTML = '❌ Prediction failed';
+                });
         }
+
+        // ==================== ANIMATION ====================
+function toggleAnimation(divId) {
+    const btn = event.target;
+
+    if (animations[divId]) {
+        // إيقاف animation
+        clearInterval(animations[divId]);
+        delete animations[divId];
+        btn.innerHTML = '▶';
+        btn.style.backgroundColor = 'var(--accent)';
+    } else {
+        // بدء animation من آخر position
+        btn.innerHTML = '⏸';
+        btn.style.backgroundColor = '#fbbf24';
+
+        const dates = chartData.dates;
+        if (!dates || dates.length === 0) return;
+
+        const totalPoints = dates.length;
+        const windowSize = parseInt(document.getElementById('windowSize').value) || 100;
+        const maxStart = Math.max(0, totalPoints - windowSize);
+
+        // خد آخر position من الذاكرة، لو مفيش ابدأ من 0
+        let pos = animationPositions[divId] || 0;
+
+        // لو الـ position أكبر من الحد الأقصى، ابدأ من 0
+        if (pos > maxStart) pos = 0;
+
+        animations[divId] = setInterval(() => {
+            pos += 1;
+
+            // لو وصلنا للآخر، نرجع للأول
+            if (pos > maxStart) {
+                pos = 0;
+            }
+
+            if (pos + windowSize - 1 < dates.length) {
+                Plotly.relayout(divId, {
+                    'xaxis.range': [dates[pos], dates[pos + windowSize - 1]]
+                });
+            }
+
+            // احفظ الـ position الحالي في الذاكرة
+            animationPositions[divId] = pos;
+        }, 100);
+    }
+}
 
         function playAll() {
             document.querySelectorAll('.play-btn-small').forEach(btn => {
@@ -777,26 +892,112 @@
         }
 
         function stopAll() {
-            Object.keys(animations).forEach(id => {
-                clearInterval(animations[id]);
-                delete animations[id];
-            });
-            
-            document.querySelectorAll('.play-btn-small').forEach(btn => {
-                btn.innerHTML = '▶';
+    // أوقف كل الـ animations
+    Object.keys(animations).forEach(id => {
+        clearInterval(animations[id]);
+        delete animations[id];
+    });
+
+    // غير شكل الأزرار
+    document.querySelectorAll('.play-btn-small').forEach(btn => {
+        btn.innerHTML = '▶';
+        btn.style.backgroundColor = 'var(--accent)';
+    });
+
+    // **مهم: متمسحش الـ animationPositions هنا**
+    // عشان نحتفظ بآخر مكان وقفنا عنده
+
+    // لو في وضع static، نرجع الشارت للعرض الكامل
+    if (displayMode === 'static' && chartData) {
+        if (viewMode === 'single') {
+            const chartDiv = document.getElementById('main');
+            if (chartDiv) {
+                Plotly.relayout('main', {
+                    'xaxis.autorange': true,
+                    'yaxis.autorange': true
+                });
+            }
+        } else {
+            const types = chartTypes[currentCategory].map(t => t.value).slice(0, 4);
+            types.forEach((type, i) => {
+                const divId = `chart_${i}`;
+                const chartDiv = document.getElementById(divId);
+                if (chartDiv) {
+                    Plotly.relayout(divId, {
+                        'xaxis.autorange': true,
+                        'yaxis.autorange': true
+                    });
+                }
             });
         }
+    }
+}
 
-        function clearAll() {
+function clearAll() {
+    stopAll();
+    document.getElementById('chartGrid').innerHTML = '';
+    document.getElementById('aiStatus').innerHTML = '⚡ Ready to analyze stocks and commodities';
+    chartData = null;
+    document.getElementById('file-info').style.display = 'none';
+    document.getElementById('filename').value = '';
+
+    // **مسح الـ positions بس هنا عشان clear all**
+    animationPositions = {};
+
+    showWelcomeMessage();
+}
+
+        function toggleDisplayMode(mode) {
+            displayMode = mode;
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
             stopAll();
-            document.getElementById('chartGrid').innerHTML = '';
-            document.getElementById('aiStatus').innerHTML = '⚡ Ready to analyze stocks and commodities';
-            chartData = null;
+
+            if (chartData) {
+                if (viewMode === 'single') {
+                    updateSingleChart();
+                } else {
+                    updateMultiCharts();
+                }
+            }
         }
 
-        function togglePrediction() {
-            alert('Prediction feature coming soon!');
+        function updateSingleChart() {
+            const grid = document.getElementById('chartGrid');
+            grid.innerHTML = '';
+
+            const chartType = document.getElementById('chartTypeSelect').value;
+            const card = createChartCard('main', chartType, true);
+            grid.appendChild(card);
+
+            setTimeout(() => {
+                const prediction = chartData.predictions ? chartData.predictions['main'] : null;
+                renderChart('main', chartType, chartData, prediction);
+            }, 100);
+        }
+
+        function updateMultiCharts() {
+            const grid = document.getElementById('chartGrid');
+            grid.innerHTML = '';
+
+            const types = chartTypes[currentCategory].map(t => t.value).slice(0, 4);
+
+            types.forEach((type, i) => {
+                const divId = `chart_${i}`;
+                const card = createChartCard(divId, type, false);
+                grid.appendChild(card);
+
+                setTimeout(() => {
+                    const prediction = chartData.predictions ? chartData.predictions[divId] : null;
+                    renderChart(divId, type, chartData, prediction);
+                }, 100 * (i + 1));
+            });
         }
     </script>
 </body>
+
 </html>
