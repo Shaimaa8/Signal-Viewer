@@ -15,101 +15,150 @@
                 <h2 class="logo">BioSignal <span>AI</span></h2>
             </div>
 
-            <div class="control-group">
-                <label class="section-title">SIGNAL CATEGORY</label>
-                <select id="signalCategory" class="mode-select" style="width: 100%; padding: 8px; border-radius: 6px; background: #1e293b; color: white; border: 1px solid #334155;">
-                    <option value="ecg">ECG (Heart Signal)</option>
-                    <option value="eeg">EEG (Brain Signal)</option>
-                </select>
+            <div class="control-group" style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #38bdf8; margin-bottom: 15px;">
+                <label style="color: #38bdf8; font-size: 11px; font-weight: bold; display: block; margin-bottom: 10px;">🧠 AI COMPARISON</label>
+                <button class="btn-run" onclick="runAiAnalysis()" style="width: 100%; background: #0ea5e9; color: white; margin-bottom: 10px; border-radius: 5px; padding: 8px; border:none; cursor:pointer;">
+                    Run AI Prediction
+                </button>
+                <div id="aiOutput" style="font-size: 12px; line-height: 1.6;">
+                    <div style="color: #94a3b8;">DL Prediction: <span id="aiResult" style="color: white; font-weight: bold;">--</span></div>
+                    <div style="color: #94a3b8;">Classic ML: <span id="classicResult" style="color: white;">--</span></div>
+                </div>
             </div>
 
             <div class="control-group">
                 <label class="section-title">DATA SOURCE</label>
-                <input type="file" id="fileInput" accept="*" multiple hidden>
+
+                <select id="signalType" style="width: 100%; padding: 8px; border-radius: 5px; background: #1e293b; color: white; border: 1px solid #334155; margin-bottom: 10px; cursor: pointer;">
+                    <option value="ecg">🫀 ECG Signal (Heart)</option>
+                    <option value="eeg">🧠 EEG Signal (Brain)</option>
+                </select>
+
+                <input type="file" id="fileInput" multiple hidden>
                 <button class="btn-run" style="background: #334155; color: white; width: 100%;" onclick="document.getElementById('fileInput').click()">
-                    Choose Files (CSV, HEA+DAT...)
+                    Choose Files (CSV, HEA, EDF...)
                 </button>
             </div>
 
             <div class="control-group">
                 <label>VIEWING MODE</label>
                 <select id="modeSelect">
-                    <option value="single">Single View Mode</option>
-                    <option value="multi">Multi-Channel Mode</option>
+                    <option value="single">Sequential Printing (Single)</option>
+                    <option value="multi">Refresh Dashboard (Multi)</option>
                 </select>
             </div>
 
             <div class="control-group">
-                <label>MULTI-CHANNEL LAYOUT</label>
+                <label>LAYOUT STYLE</label>
                 <select id="layoutStyle" onchange="toggleOverlaySettings()">
-                    <option value="grid">Separate Windows (Grid)</option>
-                    <option value="overlay">Same Window (Overlay)</option>
+                    <option value="grid">Separate Windows</option>
+                    <option value="overlay">Overlay Channels</option>
                 </select>
-            </div>
-
-            <div id="overlaySettings" class="control-group" style="display: none; background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #38bdf8; margin-bottom: 15px; max-height: 280px; overflow-y: auto;">
-                <label style="color: #38bdf8; font-size: 11px; font-weight: bold; display: block; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 5px;">
-                    CHANNELS CONFIGURATION
-                </label>
-                <div id="channelsConfigList">
-                    <p style="font-size: 10px; color: #94a3b8; text-align: center;">Select channels to customize</p>
-                </div>
             </div>
 
             <div class="control-group">
                 <label>SELECT CHANNELS (CTRL+CLICK)</label>
-                <select id="channel1Select" multiple style="height: 120px;"></select>
+                <select id="channel1Select" multiple style="height: 120px; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 6px;"></select>
+            </div>
+
+            <div id="overlaySettings" class="ai-results-box" style="min-height: 100px; max-height: 250px; overflow-y: auto; margin-bottom: 15px; padding: 10px; background: #0f172a; border-radius: 8px;">
+                <label style="color: #38bdf8; font-size: 11px; font-weight: bold; display: block; margin-bottom: 10px;">🎨 CUSTOMIZE CHANNELS</label>
+                <div id="channelsConfigList" style="display: flex; flex-direction: column; gap: 8px;">
+                    <p style="font-size: 11px; color: #64748b; text-align: center;">Pick channels to customize</p>
+                </div>
             </div>
 
             <div class="control-group">
                 <label>ANALYSIS TYPE</label>
-                <select id="plotType">
+                <select id="plotType" onchange="checkPolarView()">
                     <option value="signal">Time-Domain Signal</option>
                     <option value="polar">Periodic Polar Plot</option>
-                    <option value="recurrence">Poincaré Map (Recurrence)</option>
+                    <option value="recurrence">Poincaré Map</option>
                     <option value="xor">XOR Abnormality Detector</option>
                 </select>
             </div>
+            <div class="control-group" id="recurrenceOptions" style="display: none; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px dashed #38bdf8; margin-bottom: 15px;">
+                <label style="color: #38bdf8; font-size: 11px; font-weight: bold; display: block; margin-bottom: 8px;">🎯 2D MAP SETTINGS</label>
 
-            <div class="control-group">
-                <label>WINDOW SIZE: <span id="rangeVal">300</span></label>
-                <input type="range" id="timeSlider" min="50" max="2000" value="300">
+                <label style="font-size: 10px; color: #cbd5e1;">X-Axis Channel:</label>
+                <select id="xChannelSelect" onchange="if(window.refreshVisiblePlots) refreshVisiblePlots()" style="width: 100%; padding: 6px; margin-bottom: 8px; border-radius: 4px; background: #1e293b; color: white; border: 1px solid #334155;"></select>
+
+                <label style="font-size: 10px; color: #cbd5e1;">Y-Axis Channel:</label>
+                <select id="yChannelSelect" onchange="if(window.refreshVisiblePlots) refreshVisiblePlots()" style="width: 100%; padding: 6px; margin-bottom: 8px; border-radius: 4px; background: #1e293b; color: white; border: 1px solid #334155;"></select>
+
+                <label style="font-size: 10px; color: #cbd5e1;">Intensity Color Map:</label>
+                <select id="colorMapSelect" onchange="if(window.refreshVisiblePlots) refreshVisiblePlots()" style="width: 100%; padding: 6px; border-radius: 4px; background: #1e293b; color: white; border: 1px solid #334155;">
+                    <option value="Hot">Hot (Black/Red/Yellow)</option>
+                    <option value="Viridis">Viridis (Green/Blue)</option>
+                    <option value="Plasma">Plasma (Purple/Orange)</option>
+                    <option value="Jet">Jet (Blue/Red)</option>
+                </select>
+            </div>
+            <div id="polarOptions" style="display: none; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px dashed #38bdf8; margin-bottom: 15px;">
+                <label style="color: #38bdf8; font-size: 11px; font-weight: bold; display: block; margin-bottom: 8px;">🔄 POLAR DISPLAY MODE</label>
+                <select id="polarMode" onchange="if(window.refreshVisiblePlots) refreshVisiblePlots()" style="width: 100%; padding: 6px; border-radius: 4px; background: #1e293b; color: white; border: 1px solid #334155;">
+                    <option value="overlay">Standard Overlay</option>
+                    <option value="ratio_1_2">Ratio Mode (V1 / V2)</option>
+                    <option value="ratio_2_1">Ratio Mode (V2 / V1)</option>
+                </select>
+                <p style="font-size: 9px; color: #94a3b8; margin-top: 5px; line-height: 1.2;">* Ratio mode requires exactly 2 selected channels.</p>
             </div>
 
             <div class="control-group">
-                <label>SPEED: <span id="speedVal">1x</span></label>
-                <input type="range" id="speedSlider" min="1" max="10" value="1" oninput="document.getElementById('speedVal').innerText = this.value + 'x'">
+                <label>WINDOW SIZE: <span id="rangeVal" style="color:#38bdf8">1000</span></label>
+                <input type="range" id="timeSlider" min="100" max="5000" value="1000" oninput="document.getElementById('rangeVal').innerText = this.value">
+            </div>
+
+            <div class="control-group">
+                <label>SPEED: <span id="speedVal" style="color:#38bdf8">1x</span></label>
+                <input type="range" id="speedSlider" min="1" max="20" value="5" oninput="document.getElementById('speedVal').innerText = this.value + 'x'">
             </div>
 
             <div class="action-buttons-grid">
-                <button class="btn-run" onclick="plotNow()" style="width: 100%; background: #38bdf8; color: #0f172a; font-weight: bold;">Visualize</button>
-                <div class="playback-controls" style="display: flex; gap: 5px; margin-top: 10px;">
-                    <button class="btn-play-small" onclick="startPlayback()" style="flex: 1;">▶</button>
-                    <button class="btn-stop-small" onclick="stopPlayback()" style="flex: 1;">■</button>
+                <button class="btn-run" onclick="plotNow()" style="width: 100%; background: #38bdf8; color: #0f172a; font-weight: bold; border:none; padding:10px; border-radius:6px; cursor:pointer;">Visualize</button>
+                <div style="display: flex; gap: 5px; margin-top: 10px;">
+                    <button class="btn-play-small" onclick="startPlayback()" style="flex: 1; padding: 8px;">▶ Play</button>
+                    <button class="btn-stop-small" onclick="stopPlayback()" style="flex: 1; padding: 8px;">■ Stop</button>
                 </div>
             </div>
 
             <div class="control-group" style="margin-top: 15px;">
-                <button class="btn-secondary" onclick="clearPlots()" style="width: 100%; margin-bottom: 5px;">Clear Dashboard</button>
+                <button class="btn-secondary" onclick="clearPlots()" style="width: 100%; margin-bottom: 5px; background: #ef4444; color: white;">Clear All Plots</button>
                 <button class="btn-secondary" onclick="location.href='/'" style="width: 100%;">🏠 Home</button>
             </div>
         </aside>
 
-        <main class="main-content">
-            <header class="top-nav" style="padding: 10px; background: #0f172a; border-bottom: 1px solid #1e293b;">
-                <div class="ai-status-bar" id="aiStatus" style="color: #38bdf8; font-weight: bold;">
+        <main class="main-content" style="background: #020617;">
+            <header class="top-nav" style="padding: 15px; background: #0f172a; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center;">
+                <div class="ai-status-bar" id="aiStatus" style="color: #38bdf8; font-weight: bold; font-size: 14px;">
                     Status: Waiting for Data...
                 </div>
             </header>
-            <div class="grid-container" id="chartGrid" style="padding: 20px; display: grid; gap: 20px;"></div>
+
+            <div id="chartGrid" style="
+                padding: 20px;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr));
+                gap: 20px;
+                width: 100%;
+                box-sizing: border-box;
+            "></div>
         </main>
     </div>
 
-    <script>
-        function toggleOverlaySettings() {
-            const layout = document.getElementById('layoutStyle').value;
-            document.getElementById('overlaySettings').style.display = (layout === 'overlay') ? 'block' : 'none';
+  <script>
+        function checkPolarView() {
+            const type = document.getElementById('plotType').value;
+            const polarOptions = document.getElementById('polarOptions');
+            const recurrenceOptions = document.getElementById('recurrenceOptions'); // الصندوق الجديد بتاع الـ X و Y
+
+            if(polarOptions) polarOptions.style.display = (type === 'polar') ? 'block' : 'none';
+            if(recurrenceOptions) recurrenceOptions.style.display = (type === 'recurrence') ? 'block' : 'none';
         }
+
+        function toggleOverlaySettings() {}
+        document.getElementById('speedVal').innerText = document.getElementById('speedSlider').value + 'x';
+        window.onload = checkPolarView;
     </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
