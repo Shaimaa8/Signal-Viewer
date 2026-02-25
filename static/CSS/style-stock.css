@@ -24,14 +24,15 @@ body {
     overflow: hidden;
 }
 
+/* Main container - 3 column layout */
 .dashboard-container {
     display: flex;
     height: 100vh;
 }
 
-/* ===== SIDEBAR ===== */
+/* ===== SIDEBAR (Left Panel) ===== */
 .sidebar {
-    width: 340px;
+    width: 390px; /* زودنا العرض شوية */
     background: var(--sidebar-bg);
     padding: 1.5rem;
     display: flex;
@@ -42,7 +43,7 @@ body {
 }
 
 .logo {
-    font-size: 24px;
+    font-size: 30px; /* أكبر شوية */
     font-weight: bold;
     margin-bottom: 0.5rem;
 }
@@ -52,7 +53,7 @@ body {
 }
 
 .section-title {
-    font-size: 0.75rem;
+    font-size: 0.9rem; /* أكبر شوية */
     color: var(--text-secondary);
     font-weight: 700;
     text-transform: uppercase;
@@ -65,11 +66,11 @@ select, input[type="range"] {
     background: var(--bg-dark);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 0.6rem;
+    padding: 0.9rem; /* أكبر */
     border-radius: 8px;
     outline: none;
     width: 100%;
-    font-size: 0.9rem;
+    font-size: 1rem; /* أكبر */
 }
 
 select:hover, input:hover {
@@ -85,12 +86,12 @@ select option {
     background: var(--accent);
     color: var(--bg-dark);
     border: none;
-    padding: 0.8rem;
+    padding: 1.2rem; /* أكبر */
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 0.9rem;
+    font-size: 1.2rem; /* أكبر */
     width: 100%;
 }
 
@@ -103,11 +104,11 @@ select option {
     background: transparent;
     color: var(--text-secondary);
     border: 1px solid var(--border);
-    padding: 0.8rem;
+    padding: 1.2rem; /* أكبر */
     border-radius: 8px;
     cursor: pointer;
     width: 100%;
-    font-size: 0.9rem;
+    font-size: 1.2rem; /* أكبر */
     transition: all 0.2s;
 }
 
@@ -125,13 +126,13 @@ select option {
 
 .category-btn {
     flex: 1;
-    padding: 0.6rem;
+    padding: 1rem; /* أكبر */
     background: var(--bg-dark);
     border: 1px solid var(--border);
     color: var(--text-secondary);
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 1rem; /* أكبر */
     font-weight: 600;
     transition: all 0.2s;
 }
@@ -147,59 +148,33 @@ select option {
     border-color: var(--accent);
 }
 
-/* Quick symbols */
-.quick-symbols {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0.5rem 0;
-}
-
-.symbol-btn {
-    padding: 0.5rem 1rem;
-    background: var(--bg-dark);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-
-.symbol-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    transform: translateY(-1px);
-}
-
-/* Viewer type */
+/* Viewer type buttons */
 .viewer-type {
     display: flex;
     gap: 0.3rem;
     margin: 0.5rem 0;
 }
 
-.viewer-type-btn {
+.viewer-type-btn, .mode-btn {
     flex: 1;
-    padding: 0.6rem 0.3rem;
+    padding: 0.9rem 0.5rem; /* أكبر */
     background: var(--bg-dark);
     border: 1px solid var(--border);
     color: var(--text-secondary);
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.7rem;
+    font-size: 0.9rem; /* أكبر */
     font-weight: 600;
     text-transform: uppercase;
     transition: all 0.2s;
 }
 
-.viewer-type-btn:hover {
+.viewer-type-btn:hover, .mode-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
 }
 
-.viewer-type-btn.active {
+.viewer-type-btn.active, .mode-btn.active {
     background: var(--accent);
     color: var(--bg-dark);
     border-color: var(--accent);
@@ -208,7 +183,7 @@ select option {
 /* Prediction button */
 .prediction-btn {
     width: 100%;
-    padding: 1rem;
+    padding: 1.5rem; /* أكبر */
     background: linear-gradient(135deg, var(--accent), #0284c7);
     border: none;
     color: white;
@@ -216,7 +191,7 @@ select option {
     border-radius: 8px;
     margin: 1rem 0;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 1.5rem; /* أكبر */
     transition: all 0.2s;
 }
 
@@ -225,34 +200,145 @@ select option {
     box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
 }
 
-/* ===== MAIN CONTENT ===== */
+/* Data source section */
+.data-source {
+    background: var(--bg-dark);
+    padding: 1.5rem; /* أكبر */
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.data-type {
+    color: var(--accent);
+    font-size: 1.5rem; /* أكبر */
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.file-input {
+    display: flex;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.file-input input {
+    flex: 1;
+    background: var(--sidebar-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 15px; /* أكبر */
+    border-radius: 6px;
+    font-size: 1rem; /* أكبر */
+}
+
+.file-input input:read-only {
+    background: var(--bg-dark);
+}
+
+.file-input button {
+    padding: 15px 23px; /* أكبر */
+    background: var(--accent);
+    border: none;
+    color: var(--bg-dark);
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem; /* أكبر */
+    transition: background 0.2s;
+}
+
+.file-input button:hover {
+    background: #0284c7;
+}
+
+/* Load and display buttons */
+.load-btn {
+    padding: 14px; /* أكبر */
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1.5rem; /* أكبر */
+}
+
+.load-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.display-btn {
+    width: 100%;
+    padding: 20px; /* أكبر */
+    background: linear-gradient(135deg, var(--accent), #0284c7);
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 20px; /* أكبر */
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+}
+
+.display-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+}
+
+.display-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* File info section */
+#file-info {
+    background: var(--bg-dark);
+    padding: 18px; /* أكبر */
+    border-radius: 6px;
+    margin-top: 10px;
+    border-left: 3px solid var(--accent);
+    font-size: 1rem; /* أكبر */
+}
+
+/* ===== MAIN CONTENT (Middle Panel) ===== */
 .main-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 1rem 2rem;
+    padding: 1.8rem 2.4rem; /* أكبر */
     overflow: hidden;
 }
 
 .ai-status-bar {
     background: var(--sidebar-bg);
-    padding: 0.8rem 1.5rem;
+    padding: 1.5rem 1.8rem; /* أكبر */
     border-radius: 12px;
-    font-size: 0.9rem;
+    font-size: 1.5rem; /* أكبر */
     border-left: 4px solid var(--accent);
-    margin-bottom: 1rem;
+    margin-bottom: 1.8rem; /* أكبر */
 }
 
-/* Grid for charts */
+/* Charts grid */
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 1.5rem;
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.5rem 0;
+    grid-template-columns: 1fr;
+    gap: 25px; /* أكبر */
+    padding: 15px; /* أكبر */
 }
 
+/* Better grid for multi view */
+.grid-container.multi-view {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px; /* أكبر */
+    padding: 15px; /* أكبر */
+}
+
+/* Chart cards */
 .chart-card {
     background: var(--card-bg);
     border-radius: 15px;
@@ -261,25 +347,32 @@ select option {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-height: 400px;
+    margin-bottom: 20px;
 }
 
-.chart-card.full-width {
-    grid-column: 1 / -1;
-    min-height: 500px;
+/* Single view - large chart */
+.chart-card.single {
+    height: 780px !important; /* أكبر (كان 650) */
+    width: 100%;
+}
+
+/* Multi view - smaller charts */
+.chart-card.multi {
+    height: 550px !important; /* أكبر (كان 400) */
+    width: 100%;
 }
 
 .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.8rem 1.2rem;
+    padding: 1.3rem 1.8rem; /* أكبر */
     background: rgba(30, 41, 59, 0.7);
     border-bottom: 1px solid var(--border);
 }
 
 .card-header span {
-    font-size: 0.8rem;
+    font-size: 2rem; /* أكبر (كان 0.9) */
     font-weight: 700;
     color: var(--accent);
     text-transform: uppercase;
@@ -295,10 +388,10 @@ select option {
     color: var(--bg-dark);
     border: none;
     border-radius: 5px;
-    width: 32px;
-    height: 24px;
+    width: 40px; /* أكبر */
+    height: 30px; /* أكبر */
     cursor: pointer;
-    font-size: 0.7rem;
+    font-size: 0.9rem; /* أكبر */
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -321,19 +414,19 @@ select option {
 /* Footer controls */
 .footer-controls {
     display: flex;
-    gap: 0.8rem;
-    margin-top: 1rem;
-    padding: 0.5rem 0;
+    gap: 1rem; /* أكبر */
+    margin-top: 1.8rem; /* أكبر */
+    padding: 0.6rem 0;
 }
 
 .footer-btn {
-    padding: 0.6rem 1.5rem;
+    padding: 0.9rem 3rem; /* أكبر */
     background: var(--sidebar-bg);
     border: 1px solid var(--border);
     color: var(--text);
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 2rem; /* أكبر */
     font-weight: 600;
     transition: all 0.2s;
 }
@@ -354,44 +447,17 @@ select option {
     transform: translateY(-1px);
 }
 
-/* Right panel info */
-.info-panel {
-    position: fixed;
-    right: 1rem;
-    top: 5rem;
-    width: 250px;
-    background: var(--sidebar-bg);
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    padding: 1.2rem;
-    display: none;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.info-item:last-child {
-    border-bottom: none;
-}
-
-.info-label {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-}
-
-.info-value {
+/* Right panel info (minimal) */
+#currentPrice {
     color: var(--accent);
-    font-weight: 600;
+    font-weight: bold;
+    font-size: 1.3rem; /* أكبر */
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 9px; /* أكبر */
+    height: 9px; /* أكبر */
 }
 
 ::-webkit-scrollbar-track {
@@ -400,23 +466,57 @@ select option {
 
 ::-webkit-scrollbar-thumb {
     background: var(--border);
-    border-radius: 3px;
+    border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--accent);
 }
 
-/* أضف في الآخر */
-.chart-card.single {
-    grid-column: 1 / -1;
-    min-height: 600px;
+/* ===== GLOBAL FONT SCALE ===== */
+html {
+    font-size: 18px; /* يكبر كل الصفحة */
 }
 
-.chart-card.multi {
-    min-height: 400px;
+body {
+    font-size: 1.1rem;
 }
 
+/* ===== BIGGER SIDEBAR ===== */
+.sidebar {
+    width: 500px !important; /* كان 390 */
+}
+
+/* ===== Bigger main content text ===== */
+.main-content {
+    font-size: 1.2rem;
+}
+
+/* Titles bigger */
+.section-title {
+    font-size: 1.1rem !important;
+}
+
+.logo {
+    font-size: 36px !important;
+}
+
+/* Buttons bigger globally */
+button {
+    font-size: 1.1rem;
+}
+
+/* Card header text bigger */
+.card-header span {
+    font-size: 2.3rem !important;
+}
+
+/* Footer buttons bigger */
+.footer-btn {
+    font-size: 2.2rem !important;
+}
+
+/* ===== FIX MULTI VIEW (STACK CARDS VERTICALLY) ===== */
 .grid-container.multi-view {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr !important; /* يخليهم تحت بعض */
 }

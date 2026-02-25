@@ -1,0 +1,77 @@
+:root { 
+    --bg: #0f172a; 
+    --card: #1e293b; 
+    --accent: #38bdf8; 
+    --text: #f1f5f9; 
+    --success: #22c55e; 
+    --danger: #ef4444; 
+    --border: #334155;
+}
+
+body { 
+    margin: 0; 
+    font-family: 'Inter', sans-serif; 
+    background: var(--bg); 
+    color: var(--text); 
+    font-size: 15px; 
+    overflow: hidden; 
+}
+
+.dashboard { display: flex; height: 100vh; }
+
+.sidebar { 
+    width: 260px; 
+    background: var(--card); 
+    padding: 20px; 
+    border-right: 1px solid var(--border); 
+    display: flex; 
+    flex-direction: column; 
+}
+
+.sidebar-logo { color: var(--accent); text-align: center; margin-bottom: 20px; font-weight: 800; }
+
+.btn-home {
+    width: 100%; background: transparent; color: #94a3b8; border: 1px solid var(--border);
+    padding: 10px; border-radius: 8px; text-decoration: none; text-align: center;
+    font-size: 14px; transition: 0.3s;
+}
+.btn-home:hover { background: var(--border); color: white; }
+
+.content { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+
+.row { display: flex; gap: 15px; flex-wrap: wrap; }
+
+.card { 
+    background: var(--card); padding: 18px; border-radius: 12px; 
+    border: 1px solid var(--border); flex: 1; min-width: 250px;
+}
+
+.stat-label { font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+.stat-val { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin: 5px 0; }
+
+.stat-sub { font-size: 0.8rem; color: #94a3b8; }
+
+.chart-container { position: relative; height: 200px; width: 100%; margin-top: 10px; }
+
+.btn-primary { 
+    width: 100%; background: var(--accent); border: none; padding: 12px; 
+    border-radius: 8px; font-weight: 700; cursor: pointer; color: #0f172a; margin-top: 10px;
+}
+
+.progress-track { background: #0f172a; height: 8px; border-radius: 4px; margin: 8px 0; overflow: hidden; }
+.progress-fill { height: 100%; transition: 1s ease-in-out; }
+.bg-success { background: var(--success); }
+.bg-danger { background: var(--danger); }
+.text-success { color: var(--success); font-weight: bold; }
+.text-danger { color: var(--danger); font-weight: bold; }
+
+.report-box { 
+    background: #0d1117; border-left: 4px solid var(--accent); 
+    padding: 15px; border-radius: 10px; font-size: 0.95rem; line-height: 1.6; text-align: left;
+}
+
+input, select { 
+    width: 100%; background: #0f172a; color: white; border: 1px solid var(--border); 
+    padding: 10px; margin: 10px 0; border-radius: 6px; 
+}

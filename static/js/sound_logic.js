@@ -55,7 +55,85 @@ document.getElementById('pause').addEventListener('click', () => {
     source.stop();
     source = null;
 });
+// =======================
+// دالة مساعدة لتحويل AudioBuffer إلى ملف WAV
+// =======================
+function audioBufferToWav(buffer) {
+    const numOfChan = buffer.numberOfChannels;
+    const length = buffer.length * numOfChan * 2 + 44;
+    const bufferArray = new ArrayBuffer(length);
+    const view = new DataView(bufferArray);
+    const channels = [];
+    let offset = 0;
 
+    // كتابة بيانات الـ WAV Header
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + buffer.length * numOfChan * 2, true);
+    writeString(view, 8, 'WAVE');
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numOfChan, true);
+    view.setUint32(24, buffer.sampleRate, true);
+    view.setUint32(28, buffer.sampleRate * 2 * numOfChan, true);
+    view.setUint16(32, numOfChan * 2, true);
+    view.setUint16(34, 16, true);
+    writeString(view, 36, 'data');
+    view.setUint32(40, buffer.length * numOfChan * 2, true);
+
+    for (let i = 0; i < buffer.numberOfChannels; i++) {
+        channels.push(buffer.getChannelData(i));
+    }
+
+    offset = 44;
+    for (let i = 0; i < buffer.length; i++) {
+        for (let channel = 0; channel < numOfChan; channel++) {
+            let sample = Math.max(-1, Math.min(1, channels[channel][i])); // تحديد القيم
+            sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF; // تحويل لـ 16-bit
+            view.setInt16(offset, sample, true);
+            offset += 2;
+        }
+    }
+
+    return new Blob([bufferArray], { type: 'audio/wav' });
+
+    function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+}
+
+// =======================
+// تفعيل زر التحميل (Download)
+// =======================
+document.getElementById('download').addEventListener('click', () => {
+    if (!audioBuffer) {
+        alert("Please generate a sound first!");
+        return;
+    }
+
+    // 1. تحويل الصوت لملف WAV
+    const wavBlob = audioBufferToWav(audioBuffer);
+
+    // 2. إنشاء رابط وهمي للتحميل
+    const downloadUrl = URL.createObjectURL(wavBlob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+
+    // 3. تحديد اسم الملف (ممكن تخليه يتغير حسب التردد والسرعة)
+    const v = document.getElementById('velocity').value;
+    const f = document.getElementById('frequency').value;
+    a.download = `Doppler_Simulation_${f}Hz_${v}ms.wav`;
+
+    // 4. محاكاة الضغط على الرابط لبدء التحميل
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // 5. تنظيف الذاكرة
+    URL.revokeObjectURL(downloadUrl);
+});
 // =======================
 // الجزء الثاني: Real Audio (حساب سرعة السيارة وعرض الترددات بحجم أكبر)
 // =======================
@@ -94,21 +172,63 @@ function bandPassFilter(segment, sampleRate, lowHz, highHz) {
     return filtered;
 }
 
-function estimateFrequency(segment, sampleRate, minF = 100, maxF = 800) {
-    const filtered = bandPassFilter(segment, sampleRate, minF, maxF);
-    const size = filtered.length;
+// تعديل الدالة عشان تقبل تشغيل أو إيقاف الفلتر
+function estimateFrequency(segment, sampleRate, minF = 100, maxF = 800, applyFilter = true) {
+    // لو الفلتر شغال هنعدي الإشارة عليه، لو مقفول هناخد الإشارة زي ما هي
+    const dataToAnalyze = applyFilter ? bandPassFilter(segment, sampleRate, minF, maxF) : segment;
+
+    const size = dataToAnalyze.length;
     const minLag = Math.floor(sampleRate / maxF);
     const maxLag = Math.floor(sampleRate / minF);
     let maxCorr = 0, bestLag = -1;
+
     for (let lag = minLag; lag <= maxLag; lag++) {
         let corr = 0;
         for (let i = 0; i < size - lag; i++) {
-            corr += filtered[i] * filtered[i + lag];
+            corr += dataToAnalyze[i] * dataToAnalyze[i + lag];
         }
         if (corr > maxCorr) { maxCorr = corr; bestLag = lag; }
     }
     return bestLag === -1 ? 0 : sampleRate / bestLag;
 }
+
+// تعديل زرار التحليل عشان يقفل ويفتح الفلتر
+document.getElementById('analyze').addEventListener('click', () => {
+    if (!fileBuffer) return;
+    const data = fileBuffer.getChannelData(0);
+    const sampleRate = fileBuffer.sampleRate;
+    const windowSize = Math.floor(sampleRate * 0.5);
+
+    // قراءة حالة الـ Checkbox من الواجهة
+    const applyNoiseFilter = document.getElementById('useFilter').checked;
+
+    let freqs = [];
+    for (let i = 0; i < data.length - windowSize; i += windowSize) {
+        // نبعت حالة الفلتر للدالة
+        const f = estimateFrequency(data.slice(i, i + windowSize), sampleRate, 100, 800, applyNoiseFilter);
+        if (f > 100) freqs.push(f);
+    }
+
+    if (freqs.length < 2) {
+        document.getElementById('results').textContent = "Low signal quality. Try toggling the noise filter.";
+        return;
+    }
+
+    const fStart = freqs[0];
+    const fEnd = freqs[freqs.length - 1];
+    const vEstimated = 343 * (fStart - fEnd) / (fStart + fEnd);
+
+    document.getElementById('results').innerHTML = `
+        <div style="margin-bottom: 12px; font-size: 1.1em;">
+            <strong>Velocity:</strong> <span style="color: #ffffff;">${Math.abs(vEstimated).toFixed(2)} m/s </span> 
+            <span style="color: #38bdf8;">(${ (Math.abs(vEstimated) * 3.6).toFixed(1) } km/h)</span>
+        </div>
+        <div style="color: #38bdf8; font-size: 16px; font-weight: bold; display: flex; gap: 30px; background: rgba(56, 189, 248, 0.1); padding: 10px; border-radius: 6px; border-left: 4px solid #38bdf8;">
+            <span>Approach Freq: <span style="color: white;">${fStart.toFixed(1)} Hz</span></span>
+            <span>Receding Freq: <span style="color: white;">${fEnd.toFixed(1)} Hz</span></span>
+        </div>
+    `;
+});
 
 document.getElementById('analyze').addEventListener('click', () => {
     if (!fileBuffer) return;
