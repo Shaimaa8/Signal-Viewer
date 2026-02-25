@@ -42,13 +42,15 @@
                 <input type="range" id="frequency" min="100" max="2000" value="440">
 
                 <button class="btn-run" id="generate" style="margin-top:10px;">Generate Sound</button>
-                <div style="display:flex; gap:5px; margin-top:5px;">
+            <div style="display:flex; gap:5px; margin-top:5px; margin-bottom: 10px;">
                     <button class="btn-play-small" id="play" style="flex:1; border:none; border-radius:5px; padding:5px; cursor:pointer; background:var(--accent);">▶ Play</button>
                     <button class="btn-stop-small" id="pause" style="flex:1; border:none; border-radius:5px; padding:5px; cursor:pointer; background:#ef4444;">⏸ Pause</button>
                 </div>
-            </div>
 
-            <hr style="border-color: #334155; margin: 15px 0;">
+                <button class="btn-run" id="download" style="width: 100%; background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s;">
+                    💾 Download Generated Sound
+                </button>
+            </div> <hr style="border-color: #334155; margin: 15px 0;">
 
             <div class="control-group">
                 <label class="section-title">Drone Detection</label>
