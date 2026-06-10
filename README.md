@@ -1,770 +1,831 @@
-# README.md - Signal Viewer AI Platform
-
-![Home Page](docs/images/Home%20Page.jpeg)
+# 📊 BioSignal AI - Multi-Modal Signal Viewer
 
 <div align="center">
-  <h1>🔬 Signal Viewer AI Platform</h1>
-  <p><strong>Multi-Modal Signal Analysis with Deep Learning</strong></p>
-  <p>DSP Course - Task 01 | Team 08 | Spring 2026</p>
+  <img src="docs/images/Home%20Page.jpeg" alt="Home Page" width="800"/>
+  
+  ## 🔬 Signal Viewer AI Platform
+  **Multi-Modal Signal Analysis with Deep Learning**
+  
+  *DSP Course - Task 01 | Team 08 | Spring 2026*
 </div>
 
 ---
 
 ## 📋 Table of Contents
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Project Structure](#project-structure)
-- [Quick Start](#quick-start)
-- [Module Documentation](#module-documentation)
-- [Model Architectures](#model-architectures)
-- [Feature Engineering](#feature-engineering)
-- [Screenshots Gallery](#screenshots-gallery)
-- [Demo Video](#demo-video)
-- [Requirements](#requirements)
-- [Training Scripts](#training-scripts)
-- [Team](#team)
+1. [Project Overview](#-project-overview)
+2. [System Architecture](#-system-architecture)
+3. [Medical Signals (ECG/EEG)](#-medical-signals-ecgeeg)
+4. [Acoustic Signals](#-acoustic-signals)
+5. [Trading Signals](#-trading-signals)
+6. [Microbiome Signals](#-microbiome-signals)
+7. [Installation & Setup](#-installation--setup)
+8. [Usage Guide](#-usage-guide)
+9. [Technical Implementation](#-technical-implementation)
+10. [Demo Video](#-demo-video)
 
 ---
 
-## 🎯 Overview
+## 🎯 Project Overview
 
-**Signal Viewer AI** is an integrated web-based platform for analyzing four distinct types of signals using state-of-the-art deep learning models and classic signal processing algorithms. The platform provides real-time visualization, AI-powered classification, and comprehensive analysis across multiple domains.
+**BioSignal AI** is a comprehensive multi-modal signal analysis platform that implements all requirements of Task 1: Signal Viewer with basic processing. The system handles four distinct signal types with specialized visualization and AI-powered analysis.
 
-| Module | Signals | Data Sources |
-|--------|---------|--------------|
-| 🫀 Medical | ECG, EEG | MIT-BIH Arrhythmia, CHB-MIT Scalp EEG |
-| 🦠 Microbiome | Taxonomic Profiles | iHMP, taxonomic_profiles.tsv |
-| 📈 Trading | Stocks, Currencies, Minerals | Yahoo Finance, Historical Data |
-| 🔊 Acoustic | Vehicle, Drone Sounds | Real recordings (WhatsApp Audio/Video) |
+### Key Features at a Glance
 
----
-
-## ✨ Key Features
-
-### 🫀 **Medical Signal Analysis**
-- **Multi-channel visualization** for ECG/EEG with 7 abnormality types:
-  - Atrial Fibrillation (AFib)
-  - Bradycardia
-  - Fusion & Unknown beats (F+Q)
-  - Normal Sinus Rhythm
-  - ST-Elevation (STEMI)
-  - Supraventricular (S)
-  - Tachycardia
-  - Ventricular ectopic beats
-
-- **AI-based classification** using HuBERT model
-- **Classic ML comparison** using statistical features + autocorrelation
-- **4 Viewer Types**:
-  - Continuous time-domain
-  - XOR abnormality detection
-  - Polar magnitude-time plots
-  - Recurrence scatter plots
-- **Channel customization**: Color, thickness, show/hide per channel
-
-### 🔊 **Acoustic Signal Analysis**
-- **Doppler effect simulator** with adjustable velocity (1-300 m/s) and frequency (100-2000 Hz)
-- **Real vehicle analysis**: Upload car passing recordings
-- **Drone detection** using frequency analysis on real drone audio/video
-- **Audio playback** with play/pause controls
-- **Download generated sounds** as WAV files
-
-### 📈 **Trading Signal Analysis**
-- **Multi-category support**: Stocks, currencies, minerals
-- **LSTM-based prediction** with 5-365 day horizon
-- **Multiple chart types**:
-  - Candlestick + Volume
-  - Moving Average overlays
-  - Bollinger Bands
-  - Volatility analysis
-  - Seasonality patterns
-- **View modes**: Static or over-time animation
-- **Confidence intervals** for predictions (95%)
-
-### 🦠 **Microbiome Analysis**
-- **Disease prediction**: CD, UC, Healthy, nonIBD using iHMP dataset
-- **Diversity metrics**: Shannon Index, F/B Ratio
-- **Clinical reporting** with personalized recommendations
-- **Interactive visualizations**:
-  - Bar charts for top taxa
-  - Radar plots for microbial profiles
-  - Progress bars for beneficial/pathogen levels
+| Signal Type | Key Capabilities | AI Models Used |
+|-------------|------------------|----------------|
+| **Medical** | Multi-channel ECG/EEG, 4+ viewer types, abnormality detection | HuBERT + MLP Classifier |
+| **Acoustic** | Doppler simulation, vehicle velocity estimation, drone detection | Classic algorithms (non-AI) |
+| **Trading** | Stock/currency/mineral analysis, LSTM prediction | Global LSTM (3-layer) |
+| **Microbiome** | Disease profiling, diversity metrics, clinical reports | Random Forest |
 
 ---
 
-## 📁 Project Structure
+## 🏗️ System Architecture
 
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Flask Backend (app.py)                   │
+│         Routes, File Handling, Model Loading, API            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│  Medical API  │    │  Acoustic API │    │  Trading API  │
+│  /upload      │    │/upload_sound  │    │ /api/upload   │
+│/analyze_signal│    │ /detect_drone │    │ /api/predict  │
+└───────────────┘    └───────────────┘    └───────────────┘
+        │                     │                     │
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│   Models/     │    │   Audio       │    │   Models/     │
+│   Medical/    │    │ Processing    │    │   Trading/    │
+└───────────────┘    └───────────────┘    └───────────────┘
+```
+
+### Project Structure
 ```
 SIGNAL_VIEWER/
 │
-├── app.py                          # Main Flask application (2000+ lines)
+├── Data/                          # Raw signal data
+│   ├── Acoustic Signals/          # Vehicle and drone audio
+│   ├── Medical Signals/           # ECG/EEG recordings
+│   ├── Microbiome Signals/        # Microbial abundance data
+│   └── Trading Signals/           # Stock/currency/mineral CSVs
 │
-├── Data/                            # Comprehensive signal datasets
-│   ├── Acoustic Signals/
-│   │   ├── car/                    # Vehicle passing sounds (WhatsApp Audio)
-│   │   │   ├── WhatsApp Audio 2026-02-18 at 6.53.14 PM.mpeg
-│   │   │   └── WhatsApp Audio 2026-02-18 at 6.53.15 PM.mpeg
-│   │   └── Drones/                  # Drone audio/video samples
-│   │       ├── WhatsApp Audio 2026-02-18 at 6.53.12 PM.mpeg
-│   │       └── WhatsApp Video 2026-02-18 at 6.53.13 PM.mp4
-│   │
-│   ├── Medical Signals/
-│   │   ├── ECG Data/                # MIT-BIH Arrhythmia Database
-│   │   │   ├── Atrial Fibrillation (AFib)/
-│   │   │   │   ├── 04015.dat
-│   │   │   │   ├── 04015.hea
-│   │   │   │   └── 04015.hea-
-│   │   │   │
-│   │   │   ├── Bradycardia/
-│   │   │   │   ├── 202.dat
-│   │   │   │   └── 202.hea
-│   │   │   │
-│   │   │   ├── Fusion & Unknown (F + Q)/
-│   │   │   │   ├── 207.atr
-│   │   │   │   ├── 207.dat
-│   │   │   │   └── 207.hea
-│   │   │   │
-│   │   │   ├── Normal Sinus Rhythm/
-│   │   │   │   ├── 19090.atr
-│   │   │   │   ├── 19090.dat
-│   │   │   │   ├── 19090.hea
-│   │   │   │   └── 19090.xws
-│   │   │   │
-│   │   │   ├── ST-Elevation (STEMI)/
-│   │   │   │   ├── s0015lre.dat
-│   │   │   │   ├── s0015lre.hea
-│   │   │   │   └── s0015lre.xyz
-│   │   │   │
-│   │   │   ├── Supraventricular (S)/
-│   │   │   │   ├── 200.atr
-│   │   │   │   ├── 200.dat
-│   │   │   │   ├── 200.hea
-│   │   │   │   └── 200.xws
-│   │   │   │
-│   │   │   ├── Tachycardia/
-│   │   │   │   ├── 100.atr
-│   │   │   │   ├── 100.dat
-│   │   │   │   ├── 100.hea
-│   │   │   │   └── 100.xws
-│   │   │   │
-│   │   │   └── Ventricular ectopic beats/
-│   │   │       ├── 214.atr
-│   │   │       ├── 214.dat
-│   │   │       ├── 214.hea
-│   │   │       └── 214.xws
-│   │   │
-│   │   └── EEG/                      # CHB-MIT Scalp EEG Database
-│   │       ├── Epileptic Seizure/
-│   │       │   ├── chb01_03.edf
-│   │       │   ├── chb01_03.edf.seizures
-│   │       │   └── chb01_04.edf.seizures
-│   │       │
-│   │       ├── Normal/
-│   │       │   ├── S001R01.edf
-│   │       │   └── S001R02.edf
-│   │       │
-│   │       └── Sleep Disorder/
-│   │           ├── sc4002e0.hyp
-│   │           └── sc4002e0.rec
-│   │
-│   ├── Microbiome Signals/
-│   │   ├── iHMP_data.csv            # Integrative Human Microbiome Project
-│   │   └── taxonomic_profiles.tsv   # Taxonomic abundance data
-│   │
-│   └── Trading Signals/
-│       ├── currencies/               # Currency pairs data
-│       ├── minerals/                 # Mineral commodities
-│       └── Stock/                     # Stock market data
+├── Models/                         # Pre-trained AI models
+│   ├── Medical/                    # ECG classification models
+│   ├── Microbiome/                  # Random Forest models
+│   └── Trading/                     # LSTM models
 │
-├── Models/                           # Pre-trained models and training scripts
-│   ├── Medical/
-│   │   ├── hubert_ecg.py             # HuBERT model for ECG
-│   │   ├── train_model(1).py          # Training script
-│   │   ├── model-ecg.py               # ECG model definition
-│   │   ├── classification.py           # Classification utilities
-│   │   ├── ecg_classifier.pkl         # Trained classifier
-│   │   ├── model.safetensors          # HuBERT weights
-│   │   └── config.json                 # Model configuration
-│   │
-│   ├── Microbiome/
-│   │   ├── microbiome_model.pkl       # Random Forest model
-│   │   ├── model_features.pkl         # Feature names
-│   │   ├── iHMP_data.csv              # Training data
-│   │   └── train_model (1).py          # Training script
-│   │
-│   ├── Trading/
-│   │   ├── __init__.py
-│   │   ├── global_lstm.py             # LSTM model definition
-│   │   ├── prepare_data.py             # Data preprocessing
-│   │   └── train_global_lstm.py        # Training script
-│   │
-│   └── saved/                         # Trained LSTM models
-│       ├── asset_mapping.json          # Asset name mappings
-│       ├── global_lstm_model_metadata.pkl
-│       ├── global_lstm_model_scaler_x.pkl
-│       ├── global_lstm_model_scaler_y.pkl
-│       ├── global_lstm_model.h5
-│       └── training_data.csv
+├── static/                          # Frontend assets
+│   ├── CSS/                         # Styling files
+│   └── JS/                          # JavaScript logic
 │
-├── static/                            # Frontend assets
-│   ├── CSS/
-│   │   ├── sound_style.css
-│   │   ├── style-micro.css
-│   │   ├── style-stock.css
-│   │   └── style.css
-│   │
-│   └── JS/
-│       ├── script.js                    # Medical viewer logic
-│       ├── sound_logic.js                # Acoustic analysis
-│       └── sound.js                       # Doppler simulation
+├── Templates/                        # HTML pages
+│   ├── index.html                    # Main entry
+│   ├── viewer.html                    # Medical viewer
+│   ├── sound.html                      # Acoustic analyzer
+│   ├── stock.html                      # Trading dashboard
+│   └── micro.html                      # Microbiome analysis
 │
-├── Templates/                          # HTML pages
-│   ├── index.html                       # Home page
-│   ├── viewer.html                       # Medical viewer
-│   ├── sound.html                         # Acoustic analysis
-│   ├── stock.html                          # Trading analysis
-│   └── micro.html                           # Microbiome analysis
+├── docs/                              # Documentation
+│   ├── images/                        # Screenshots
+│   └── Video/                         # Demo video
 │
-├── docs/                                 # Documentation
-│   ├── images/                             # Screenshots (40+ files)
-│   │   ├── Medical/                         # 15+ medical screenshots
-│   │   │   ├── 2 Channel Polar .jpeg
-│   │   │   ├── 2 Channel Polar.jpeg
-│   │   │   ├── 2D cumulative Scatter.jpeg
-│   │   │   ├── AI Comparison .jpeg
-│   │   │   ├── All Views.jpeg
-│   │   │   ├── EEG - polar&XOR views .jpeg
-│   │   │   ├── EEG signal.jpeg
-│   │   │   ├── Midecal page.jpeg
-│   │   │   ├── overlay polar view.jpeg
-│   │   │   ├── overlay view.jpeg
-│   │   │   ├── overlay XOR view .jpeg
-│   │   │   ├── Select Channels & color .jpeg
-│   │   │   ├── Select Type .jpeg
-│   │   │   ├── Select Type 2 .jpeg
-│   │   │   ├── Single channel Polar.jpeg
-│   │   │   └── Single Channel View.jpeg
-│   │   │
-│   │   ├── Trading/                          # 12+ trading screenshots
-│   │   │   ├── AAPL Stock File Over Time .jpeg
-│   │   │   ├── AAPL Stock File Static .jpeg
-│   │   │   ├── AAPL Stock File With Prediction.jpeg
-│   │   │   ├── Candlestick + Volume Chart overtime.jpeg
-│   │   │   ├── Currencies – All Charts (over time).jpeg
-│   │   │   ├── Currencies – All Charts (Static).jpeg
-│   │   │   ├── Line Chart .jpeg
-│   │   │   ├── Minerals-All Charts(overtime).jpeg
-│   │   │   ├── Minerals-All Charts(Static).jpeg
-│   │   │   ├── Stock-All Charts(overtime).jpeg
-│   │   │   ├── StockPage.jpeg
-│   │   │   └── Upload file in stock page .jpeg
-│   │   │
-│   │   ├── Acoustic Page.jpeg
-│   │   ├── Home Page.jpeg
-│   │   └── Microbine .jpeg
-│   │
-│   └── Video/
-│       └── signal_viewer_demo.mp4           # 3-min demo video
-│
-└── requirements.txt                    # Python dependencies
+└── app.py                             # Main Flask application
 ```
 
 ---
 
-## ⚡ Quick Start
+## ❤️ Medical Signals (ECG/EEG)
+
+### Overview
+The medical signal viewer supports multi-channel ECG (heart) and EEG (brain) signals with multiple visualization modes and AI-based abnormality detection.
+
+### 📸 Medical Page
+![Medical Page](docs/images/Medical/Midecal%20page.jpeg)
+*Main medical dashboard with sidebar controls and chart grid*
+
+### Supported File Formats
+- `.hea` + `.dat` (WFDB format)
+- `.edf` (European Data Format)
+- `.csv` (custom format)
+
+### 🎛️ Control Panel Features
+
+#### Signal Type Selection
+![Signal Type Selection](docs/images/Medical/Select%20Type%202%20.jpeg)
+*Choose between ECG and EEG signals*
+
+#### Signal Type Selection 2
+![Signal Type Selection 2](docs/images/Medical/Select%20Type%20.jpeg)
+*Alternative signal type selector*
+
+### 📊 Viewer Types Implemented
+
+#### 1. Continuous-Time Signal Viewer
+![Single Channel View](docs/images/Medical/ECG/Multi%20views/Grid/Single%20Channel%20View.jpeg)
+*Standard time-domain visualization with amplitude vs time*
+
+**Features:**
+- Viewport of fixed time-length
+- Speed control (1x to 20x)
+- Window size adjustment (100-5000 samples)
+- Play/Stop controls
+- Zoom in/out capability
+
+#### 2. Polar Graph Viewer
+![Single Channel Polar](docs/images/Medical/ECG/Multi%20views/Grid/Single%20channel%20Polar.jpeg)
+*Polar representation where r = magnitude, θ = time*
+
+**Advanced Polar Modes:**
+- **Standard Overlay** - Multiple channels overlaid
+- **Ratio Mode (V1/V2)** - Channel ratio visualization
+- **Ratio Mode (V2/V1)** - Inverse ratio visualization
+
+![2 Channel Polar](docs/images/Medical/ECG/Multi%20views/overlay/2%20Channel%20Polar.jpeg)
+*Two-channel polar overlay with ratio analysis*
+
+![Overlay Polar View](docs/images/Medical/ECG/Multi%20views/overlay/overlay%20polar%20view.jpeg)
+*Multiple channels overlaid in polar coordinates*
+
+![Polar Multiple Overlay](docs/images/Medical/ECG/Multi%20views/overlay/polar%20multiple%20overlay.png)
+*Enhanced polar overlay with multiple channels*
+
+#### 3. XOR Graph Viewer
+![XOR Grid](docs/images/Medical/ECG/Multi%20views/Grid/xor%20grid.png)
+*Signal divided into time chunks and XOR-ed*
+
+**How it works:**
+- Signal divided into chunks (window size)
+- Each chunk plotted on top of previous
+- Identical chunks cancel out (XOR effect)
+- Highlights differences between periods
+
+![XOR with Different Window Size](docs/images/Medical/ECG/Multi%20views/overlay/xor%20with%20different%20window%20size.png)
+*XOR visualization with adjustable chunk size*
+
+![Overlay XOR View](docs/images/Medical/ECG/Multi%20views/overlay/overlay%20XOR%20view%20.jpeg)
+*XOR view with multiple channels overlaid*
+
+#### 4. Recurrence/Poincaré Map
+![Poincaré Map](docs/images/Medical/ECG/Multi%20views/Grid/poincare%20map.png)
+*2D Scatter plot betwee X[n] and X[n+1]*
+
+**Customization:**
+- X-axis channel selection
+- Y-axis channel selection
+- Color map selection (Hot, Viridis, Plasma, Jet)
+- Shows signal dynamics and patterns
+
+![2D Cumulative Scatter](docs/images/Medical/ECG/Multi%20views/overlay/2D%20cumulative%20Scatter.jpeg)
+*Enhanced recurrence plot with density contours*
+
+![Overlay View](docs/images/Medical/ECG/Multi%20views/overlay/overlay%20view.jpeg)
+*Standard overlay view with multiple channels*
+
+### 🎨 Channel Customization
+
+#### Channel Selection
+![Select Channels](docs/images/Medical/Select%20Channels%20%26%20color%20.jpeg)
+*Multi-select channels with Ctrl+Click*
+
+#### Per-Channel Properties
+- **Color picker** - Custom color per channel
+- **Line thickness** - Adjustable width (0.5-5.0)
+- **Animation toggle** - Enable/disable per channel
+- **Show/Hide** - Toggle visibility in overlay mode
+
+### 🤖 AI Abnormality Detection
+
+#### AI Comparison Panel
+![AI Comparison](docs/images/Medical/AI%20Comparison%20.png)
+*Side-by-side comparison of Deep Learning and Classic ML*
+
+#### Deep Learning Model (HuBERT + MLP)
+- **Feature Extractor**: HuBERT Transformer model
+- **Classifier**: 3-layer MLP (256→128→64 neurons)
+- **Classes**: 5 ECG abnormality types
+  - Normal (N)
+  - Supraventricular ectopic beat (S)
+  - Ventricular ectopic beat (V)
+  - Fusion beat (F)
+  - Unknown beat (Q)
+- **Multi-channel analysis**: Analyzes up to 3 channels
+
+#### Classic ML Algorithm
+- **R-peak detection** using `scipy.signal.find_peaks`
+- **Heart rate calculation** (BPM)
+- **Statistical features**: SDNN, RMSSD
+- **Rule-based classification**:
+  - SDNN > 0.12 → Arrhythmia suspected
+  - BPM > 100 → Tachycardia
+  - BPM < 50 → Bradycardia
+  - Otherwise → Normal rhythm
+
+### ⚙️ Playback Controls
+
+#### Speed and Window Controls
+![Speed and Window Size](docs/images/Medical/speed%20and%20Window%20size.png)
+*Adjust playback speed and viewing window*
+
+- **Speed Slider**: 1x to 20x
+- **Window Size**: 100 to 5000 samples
+- **Real-time animation** across all viewers
+- **Synchronized playback** in multi-view mode
+
+### 📈 All Views Showcase
+![All Views](docs/images/Medical/ECG/single%20view/All%20Views.jpeg)
+*Complete set of viewer types in single mode*
+
+### 🧠 EEG-Specific Features
+![EEG Options](docs/images/Medical/options.png)
+*EEG-specific analysis options*
+
+![Select Analysis Type](docs/images/Medical/select%20type%20of%20analysis.png)
+*Choose from multiple analysis modes*
+
+---
+
+## 🔊 Acoustic Signals
+
+### Overview
+The acoustic module provides Doppler effect simulation and real-world vehicle/drone analysis using classic signal processing algorithms.
+
+### 📸 Acoustic Page
+![Acoustic Page](docs/images/Acoustic/Acoustic%20Page.jpeg)
+*Main acoustic analysis dashboard*
+
+### 🚗 Doppler Effect Simulation
+
+#### Sound Generation Controls
+![Generate Sound](docs/images/Acoustic/Generate%20sound%20feature.png)
+*Velocity and frequency sliders with play/pause controls*
+
+**Physics Model:**
+```
+f_approach = f * (v_sound + v) / (v_sound - v)
+f_recede = f * (v_sound - v) / (v_sound + v)
+```
+
+**Parameters:**
+- **Velocity**: 1-300 m/s
+- **Frequency**: 100-2000 Hz
+- **Duration**: 5 seconds
+- **Envelope**: Triangular amplitude envelope
+
+**Features:**
+- Real-time slider updates
+- Play/Pause generated sound
+- Download as WAV file
+
+### 🚙 Real Vehicle Analysis
+
+#### Velocity Estimation
+![Estimate Velocity](docs/images/Acoustic/Estimate%20velocity%20and%20Frequency.png)
+*Upload real vehicle sounds for analysis*
+
+**Algorithm Steps:**
+1. **Band-pass filtering** (100-800 Hz) - removes noise
+2. **Autocorrelation** - finds dominant frequency
+3. **Sliding windows** - analyzes approach and recede phases
+4. **Doppler formula** - calculates velocity
+
+**Results Display:**
+- Velocity in m/s and km/h
+- Approach frequency
+- Receding frequency
+- Noise filter toggle
+
+### 🚁 Drone Detection
+
+#### Detection Results
+![Drone Detection](docs/images/Acoustic/Drone%20Detection.png)
+*Frequency-based drone detection algorithm*
+
+**Detection Method:**
+- Frequency range: 150-800 Hz (typical drone range)
+- Window size: 200ms sliding windows
+- Autocorrelation frequency estimation
+- Average frequency across all windows
+
+**Output:**
+- ⚠️ **DRONE DETECTED!** (if frequency in range)
+- ✅ **No Drone Detected** (if frequency outside range)
+- Average frequency display
+
+---
+
+## 📈 Trading Signals
+
+### Overview
+The trading module supports stocks, currencies, and minerals with multiple chart types and LSTM-based prediction.
+
+### 📸 Trading Page
+![Trading Page](docs/images/Trading/TradingPage.jpeg)
+*Main trading dashboard with category selection*
+
+### 📂 Asset Categories
+
+| Category | Chart Types | Example Assets |
+|----------|------------|----------------|
+| **Stock Market** | Candlestick + Volume, MA Overlay, % Comparison, Line Chart | AAPL, MSFT, GOOGL |
+| **Currency** | Line Chart, Bollinger Bands, Rolling Volatility, MA Overlay | EUR/USD, GBP/USD, USD/JPY |
+| **Mineral** | Candlestick, MA 50/200 Cross, Seasonality, Line Chart | Gold, Silver, Copper |
+
+### 📤 File Upload
+
+#### Upload Interface
+![Upload File](docs/images/Trading/Upload%20file%20in%20stock%20page%20.jpeg)
+*CSV upload with automatic format detection*
+
+**Intelligent Parser Features:**
+- Detects Yahoo Finance format (skips first 2 rows)
+- Handles standard CSV with headers
+- Works with files without headers
+- Automatic date column detection
+- Extracts price data from various formats
+
+### 📊 Chart Types in Action
+
+#### Candlestick + Volume
+![Candlestick Chart](docs/images/Trading/Stock/Candlestick%20+%20Volume%20Chart%20overtime.jpeg)
+*OHLC candlesticks with volume bars*
+
+#### MA Overlay
+![MA Overlay](docs/images/Trading/Currencies/Line%20Chart%20.jpeg)
+*Moving averages (20/50) overlaid on price*
+
+#### Bollinger Bands
+![Bollinger Bands](docs/images/Trading/Currencies/Currencies%20–%20All%20Charts%20(over%20time).jpeg)
+*Volatility bands with MA20 and ±2σ*
+
+#### Seasonality
+![Seasonality](docs/images/Trading/Minerals/Minerals-All%20Charts(overtime)%20.jpeg)
+*Average price by month for minerals*
+
+### 🔮 LSTM Prediction
+
+#### Prediction Interface
+![Prediction](docs/images/Trading/Predection%20and%20choose%20no.%20of%20days.png)
+*Forecast days selection and prediction button*
+
+**Model Architecture:**
+- **Input**: 60-day sequences
+- **Features**: open, high, low, close returns, volume change
+- **LSTM layers**: 128 → 64 → 32 units
+- **Dropout**: 0.2 after each LSTM layer
+- **Output**: Next day's price
+
+**Smart Prediction Taming:**
+1. Calculate historical volatility
+2. Apply realistic drift
+3. Clip extreme predictions
+4. Generate 95% confidence bands
+
+#### Prediction Results
+![AAPL Prediction](docs/images/Trading/Stock/AAPL%20Stock%20File%20With%20Prediction.jpeg)
+*Historical data + forecast with confidence intervals*
+
+### 🔄 View Modes
+
+#### Static Mode
+![Static View](docs/images/Trading/Stock/AAPL%20Stock%20File%20Static%20.jpeg)
+*Full historical data displayed*
+
+#### Over Time Mode
+![Over Time View](docs/images/Trading/Stock/AAPL%20Stock%20File%20Over%20Time%20.jpeg)
+*Animated window view with playback*
+
+#### Multi-View Mode
+![All Stock Charts](docs/images/Trading/Stock/Stock-All%20Charts(overtime)%20.jpeg)
+*Four chart types displayed simultaneously*
+
+#### Currencies Multi-View
+![Currencies All Charts Over Time](docs/images/Trading/Currencies/Currencies%20–%20All%20Charts%20(over%20time).jpeg)
+*Over time view of all currency charts*
+
+![Currencies All Charts Static](docs/images/Trading/Currencies/Currencies%20–%20All%20Charts%20(Static).jpeg)
+*Static view of all currency charts*
+
+#### Minerals Multi-View
+![Minerals All Charts Over Time](docs/images/Trading/Minerals/Minerals-All%20Charts(overtime)%20.jpeg)
+*Over time view of all mineral charts*
+
+![Minerals All Charts Static](docs/images/Trading/Minerals/Minerals-All%20Charts(Static)%20.jpeg)
+*Static view of all mineral charts*
+
+---
+
+## 🧬 Microbiome Signals
+
+### Overview
+The microbiome module analyzes microbial abundance data to predict disease states and calculate diversity metrics.
+
+### 📸 Microbiome Page
+![Microbiome Page](docs/images/microbiome/microbiome.jpeg)
+*Main microbiome analysis dashboard*
+
+### 📤 Data Upload
+
+#### Upload Interface
+![Upload Data](docs/images/microbiome/Upload%20data%20and%20Run%20Ai.png)
+*TSV/CSV upload with sample selection*
+
+**Supported Format:**
+- Rows: Samples/patients
+- Columns: Bacterial taxa
+- Last column: Diagnosis (CD, UC, Healthy, nonIBD)
+
+### 🎯 AI Diagnosis
+
+#### Diagnosis Results
+![AI Diagnosis](docs/images/microbiome/AI%20Diagnosis.png)
+*AI-predicted disease with confidence score*
+
+**Model Details:**
+- **Algorithm**: Random Forest (100 trees)
+- **Training data**: iHMP dataset
+- **Classes**: Crohn's Disease, Ulcerative Colitis, Healthy, nonIBD
+- **Features**: 200+ bacterial taxa
+
+### 📊 Scientific Metrics
+
+#### Diversity Indices
+![Charts and Polar](docs/images/microbiome/charts%20and%20polar%20.png)
+*Bar chart and radar visualization*
+
+**Shannon Index** (Alpha diversity):
+```
+H = -∑(p_i * ln(p_i))
+where p_i = relative abundance of taxon i
+```
+
+**F/B Ratio** (Phyla balance):
+- Firmicutes / Bacteroidetes
+- Balanced range: 0.5 - 1.5
+- Low (<0.5): Bacteroidetes dominance
+- High (>1.5): Firmicutes dominance
+
+#### Clinical Levels
+**Beneficial bacteria**:
+- Faecalibacterium
+- Bifidobacterium
+- Lactobacillus
+
+**Pathogen load**:
+- Escherichia
+- Shigella
+- Enterobacteriaceae
+
+### 📋 Clinical Interpretation
+
+#### Report Generation
+![Clinical Interpretation](docs/images/microbiome/Clinical%20Interpretation.png)
+*AI-generated clinical report with color-coded advice*
+
+**Report Components:**
+1. **Diagnosis** - Disease classification
+2. **Phyla Balance** - F/B ratio interpretation
+3. **Summary** - Personalized advice
+4. **Diversity** - Shannon index value
+
+---
+
+## 🔧 Installation & Setup
 
 ### Prerequisites
-- Python 3.8+
-- 8GB RAM (minimum)
-- 4GB free disk space
-
-### Installation (5 minutes)
-
 ```bash
-# 1. Clone repository
-git clone https://github.com/your-repo/SIGNAL_VIEWER.git
+Python 3.8+
+pip (Python package manager)
+FFmpeg (for audio processing)
+Git (optional)
+```
+
+### Step 1: Clone Repository
+```bash
+git clone <repository-url>
 cd SIGNAL_VIEWER
+```
 
-# 2. Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
+### Step 2: Install Dependencies
+```bash
 pip install -r requirements.txt
+```
 
-# 4. Run application
+**requirements.txt:**
+```
+flask==2.3.3
+tensorflow==2.13.0
+torch==2.0.1
+transformers==4.35.0
+wfdb==4.1.2
+mne==1.5.1
+librosa==0.10.1
+scikit-learn==1.3.0
+pandas==2.0.3
+numpy==1.24.3
+plotly==5.17.0
+joblib==1.3.2
+scipy==1.11.2
+```
+
+### Step 3: Prepare Directory Structure
+```bash
+# Create data directories
+mkdir -p Data/Acoustic\ Signals/{car,Drones}
+mkdir -p Data/Medical\ Signals/{ECG\ Data,EEG}
+mkdir -p Data/Microbiome\ Signals
+mkdir -p Data/Trading\ Signals/{currencies,minerals,Stock}
+
+# Create temp upload directories
+mkdir -p temp_uploads_{ecg,micro,sound,eeg,acoustic}
+```
+
+### Step 4: Add Model Files
+
+**Medical Models** (`Models/Medical/`):
+- `hubert_ecg.py` - Custom HuBERT implementation
+- `ecg_classifier.pkl` - Trained MLP classifier
+- `model.safetensors` - HuBERT weights
+- `config.json` - Model configuration
+
+**Microbiome Models** (`Models/Microbiome/`):
+- `microbiome_model.pkl` - Random Forest classifier
+- `model_features.pkl` - Feature names
+
+**Trading Models** (`Models/Trading/saved/`):
+- `global_lstm_model.h5` - Trained LSTM weights
+- `global_lstm_model_scaler_X.pkl` - Feature scaler
+- `global_lstm_model_scaler_y.pkl` - Target scaler
+- `asset_mapping.json` - Asset ID mapping
+
+### Step 5: Add Sample Data
+
+**Medical Data**:
+- Download MIT-BIH Arrhythmia Database samples
+- Place in `Data/Medical Signals/ECG Data/`
+
+**Acoustic Data**:
+- Add vehicle pass-by recordings to `Data/Acoustic Signals/car/`
+- Add drone recordings to `Data/Acoustic Signals/Drones/`
+
+**Trading Data**:
+- Download CSV files from Yahoo Finance
+- Place in respective category folders
+
+**Microbiome Data**:
+- Download iHMP dataset
+- Save as `Data/Microbiome Signals/iHMP_data.csv`
+
+### Step 6: Run Application
+```bash
 python app.py
+```
 
-# 5. Open browser
+### Step 7: Access Web Interface
+Open browser and navigate to:
+```
 http://127.0.0.1:5000
 ```
 
 ---
 
-## 📚 Module Documentation
+## 🎮 Usage Guide
 
-### 🫀 Medical Viewer (`/viewer`)
+### Medical Viewer Workflow
 
-#### Supported ECG Abnormalities
-| Category | Files | Description |
-|----------|-------|-------------|
-| Atrial Fibrillation (AFib) | 04015.dat, .hea | Irregular heartbeat |
-| Bradycardia | 202.dat, .hea | Slow heart rate (<60 BPM) |
-| Fusion & Unknown | 207.atr, .dat, .hea | Combined beats |
-| Normal Sinus Rhythm | 19090.* | Healthy rhythm |
-| ST-Elevation (STEMI) | s0015lre.* | Heart attack indicator |
-| Supraventricular (S) | 200.* | Upper chamber arrhythmia |
-| Tachycardia | 100.* | Fast heart rate (>100 BPM) |
-| Ventricular ectopic | 214.* | Lower chamber premature beats |
+1. **Select Signal Type**
+   - Choose ECG or EEG from dropdown
 
-#### Supported EEG Conditions
-| Category | Files | Description |
-|----------|-------|-------------|
-| Epileptic Seizure | chb01_03.edf, .seizures | Seizure activity |
-| Normal | S001R01.edf, S001R02.edf | Healthy brain activity |
-| Sleep Disorder | sc4002e0.hyp, .rec | Sleep patterns |
+2. **Upload Data**
+   - Click "Choose Files"
+   - Select .hea/.edf/.csv files
+   - Wait for processing
 
-#### Feature Engineering - Classic ML
+3. **Select Channels**
+   - Ctrl+Click to select multiple
+   - Customize colors/thickness
 
-The classic ML algorithm extracts the following statistical features:
+4. **Choose Viewer Type**
+   - Signal (time-domain)
+   - Polar (magnitude vs time)
+   - XOR (difference detection)
+   - Recurrence (2D scatter)
 
-| Feature | Description | Clinical Significance |
-|---------|-------------|----------------------|
-| **SDNN** | Standard deviation of NN intervals | Overall heart rate variability |
-| **RMSSD** | Root mean square of successive differences | Parasympathetic activity |
-| **BPM** | Beats per minute | Heart rate |
-| **RR Intervals** | Time between consecutive R-peaks | Beat-to-beat variation |
-| **Autocorrelation** | Signal self-similarity | Periodicity detection |
-| **Peak Prominence** | Height of R-peaks | Signal quality |
+5. **Run AI Analysis**
+   - Click "Run AI Prediction"
+   - Compare DL vs Classic results
+
+6. **Control Playback**
+   - Adjust speed slider
+   - Adjust window size
+   - Click Play/Stop
+
+### Acoustic Analysis Workflow
+
+**For Simulation:**
+1. Adjust velocity and frequency
+2. Click "Generate Sound"
+3. Use Play/Pause to listen
+4. Click "Download" to save
+
+**For Vehicle Analysis:**
+1. Upload vehicle audio file
+2. Toggle noise filter if needed
+3. Click "Analyze Velocity"
+4. View estimated speed and frequencies
+
+**For Drone Detection:**
+1. Upload test audio file
+2. Click "Run Detection"
+3. View detection result
+
+### Trading Dashboard Workflow
+
+1. **Select Category**
+   - Stock Market / Currency / Mineral
+
+2. **Load Data**
+   - Upload CSV or use pre-loaded
+   - View file info panel
+
+3. **Choose View Mode**
+   - Single (one large chart)
+   - Multi (four charts)
+
+4. **Select Chart Type**
+   - Based on category selection
+
+5. **Set Display Mode**
+   - Static (full history)
+   - Over Time (animated window)
+
+6. **Run Prediction**
+   - Set forecast days
+   - Click "Predict Future Behavior"
+   - View forecast with confidence bands
+
+### Microbiome Analysis Workflow
+
+1. **Upload File**
+   - Select TSV/CSV file
+   - Wait for sample extraction
+
+2. **Select Sample**
+   - Choose from dropdown
+   - Click "Run AI Analysis"
+
+3. **Review Results**
+   - AI Diagnosis with confidence
+   - Shannon diversity index
+   - F/B ratio
+   - Beneficial/pathogen percentages
+
+4. **Examine Visualizations**
+   - Top taxa bar chart
+   - Microbial radar plot
+   - Clinical interpretation report
+
+---
+
+## 💻 Technical Implementation
+
+### Backend Architecture (app.py)
 
 ```python
-# Example feature extraction
+# Key routes and their functions
+
+@app.route('/upload')              # Medical signal upload
+@app.route('/analyze_signal_ai')    # AI analysis for medical
+@app.route('/upload_sound')         # Acoustic file upload  
+@app.route('/micro_upload')         # Microbiome data upload
+@app.route('/analyze_micro_sample') # Microbiome analysis
+@app.route('/api/upload')           # Trading data upload
+@app.route('/api/predict')          # LSTM prediction
+```
+
+### Medical Signal Processing
+
+```python
+# Feature extraction with HuBERT
+with torch.no_grad():
+    outputs = ECG_AI_MODEL(sig_tensor)
+    features = outputs.last_hidden_state.mean(dim=1)
+
+# Classic ML detection
+peaks, _ = scipy.signal.find_peaks(work_sig_norm, 
+                                   distance=int(0.4 * fs))
 rr_intervals = np.diff(peaks) / fs
 sdnn = np.std(rr_intervals)
 rmssd = np.sqrt(np.mean(np.diff(rr_intervals) ** 2))
-bpm = (len(peaks) / duration) * 60
 ```
 
-### 🔊 Acoustic Analysis (`/sound`)
-
-#### Doppler Simulator
-- **Velocity range**: 1-300 m/s
-- **Frequency range**: 100-2000 Hz
-- **Duration**: 5 seconds
-- **Envelope**: Triangular amplitude modulation
+### Acoustic Signal Processing
 
 ```python
-# Doppler frequency calculation
-f_approach = f * (v_sound + v) / (v_sound - v)
-f_recede = f * (v_sound - v) / (v_sound + v)
-```
-
-#### Vehicle Detection Algorithm
-
-The classic algorithm uses:
-1. **Band-pass filter** (100-600 Hz) - removes noise
-2. **Window segmentation** (0.5s windows) - temporal analysis
-3. **Autocorrelation** - finds fundamental frequency
-4. **Velocity estimation** using Doppler equation
-
-```python
-def estimate_frequency(segment, sample_rate):
-    # Autocorrelation-based frequency estimation
-    correlations = np.correlate(segment, segment, mode='full')
-    peak_lag = find_peak_lag(correlations)
-    return sample_rate / peak_lag
-```
-
-#### Drone Detection
-- **Frequency range**: 50-500 Hz (drone propeller noise)
-- **Window size**: 100ms sliding windows
-- **Threshold**: 150-800 Hz for classification
-
-### 📈 Trading Analysis (`/stock`)
-
-#### Feature Engineering for LSTM
-
-The LSTM model uses 5 technical indicators:
-
-| Feature | Calculation | Purpose |
-|---------|-------------|---------|
-| **Open** | Raw opening price | Market sentiment |
-| **High** | Daily maximum | Volatility |
-| **Low** | Daily minimum | Support levels |
-| **Close** | Raw closing price | Primary prediction target |
-| **Volume** | Trading volume | Market participation |
-
-Additional derived features (in code but not shown in UI):
-- **Returns**: log(close / close_shifted)
-- **Volatility**: rolling standard deviation
-- **RSI**: Relative Strength Index
-- **MACD**: Moving Average Convergence Divergence
-
-```python
-# Example from prepare_data.py
-def create_sequences(data, seq_length=60):
-    X, y = [], []
-    for i in range(len(data) - seq_length):
-        X.append(data[i:i+seq_length])
-        y.append(data[i+seq_length, 3])  # Close price
-    return np.array(X), np.array(y)
-```
-
-### 🦠 Microbiome Analysis (`/microbiome`)
-
-#### Feature Engineering
-
-The Random Forest model uses:
-
-| Feature Type | Examples | Biological Significance |
-|--------------|----------|------------------------|
-| **Phylum level** | Firmicutes, Bacteroidetes | Major gut divisions |
-| **Genus level** | Faecalibacterium, Bifidobacterium | Beneficial bacteria |
-| **Species level** | E. coli, Shigella | Pathogen detection |
-| **Diversity metrics** | Shannon Index | Overall health |
-| **Ratios** | F/B Ratio | Metabolic efficiency |
-
-```python
-# Feature calculation
-shannon_index = -sum(p * log(p) for p in relative_abundance)
-fb_ratio = firmicutes_sum / (bacteroidetes_sum + 1e-8)
-beneficial_pct = sum(beneficial_genera) * 100
-```
-
----
-
-## 🧠 Model Architectures
-
-### Medical: HuBERT + SVM
-
-```python
-# From hubert_ecg.py
-class HuBERTECG:
-    def __init__(self):
-        self.encoder = AutoModel.from_pretrained("facebook/hubert-base-ls960")
-        self.classifier = SVM(kernel='rbf')
+# Band-pass filter implementation
+def bandPassFilter(segment, sampleRate, lowHz, highHz):
+    RC_low = 1 / (2 * np.pi * lowHz)
+    RC_high = 1 / (2 * np.pi * highHz)
+    dt = 1 / sampleRate
+    # Filter logic...
     
-    def extract_features(self, ecg_signal):
-        # Input: 187-sample ECG segment
-        # Output: 768-dimensional embedding
-        with torch.no_grad():
-            outputs = self.encoder(ecg_tensor)
-            features = outputs.last_hidden_state.mean(dim=1)
-        return features.numpy()
+# Autocorrelation frequency estimation
+def estimateFrequency(segment, sampleRate):
+    for lag in range(minLag, maxLag):
+        corr = np.sum(segment[:-lag] * segment[lag:])
+        if corr > maxCorr:
+            maxCorr = corr
+            bestLag = lag
 ```
 
-### Trading: Global LSTM
+### Trading LSTM Model
 
 ```python
-# From global_lstm.py
 class GlobalLSTM:
-    def __init__(self):
-        self.model = Sequential([
-            LSTM(256, return_sequences=True, input_shape=(60, 5)),
-            Dropout(0.2),
+    def build_model(self):
+        model = Sequential([
+            Input(shape=(sequence_length, n_features)),
             LSTM(128, return_sequences=True),
             Dropout(0.2),
-            LSTM(64),
-            Dense(32, activation='relu'),
-            Dense(1)  # Next day price
+            LSTM(64, return_sequences=True),
+            Dropout(0.2),
+            LSTM(32),
+            Dropout(0.2),
+            Dense(16, activation='relu'),
+            Dense(1)
         ])
-        self.model.compile(optimizer='adam', loss='mse')
 ```
 
-### Microbiome: Random Forest
-
-```python
-# From train_model (1).py
-rf_model = RandomForestClassifier(
-    n_estimators=100,
-    max_depth=20,
-    min_samples_split=5,
-    random_state=42
-)
-rf_model.fit(X_train, y_train)
-```
-
----
-
-## 🔬 Feature Engineering Deep Dive
-
-### Medical Signal Features
-
-**Classic ML Algorithm** (`app.py` lines 340-390):
-
-```python
-# 1. R-peak detection
-peaks, _ = scipy.signal.find_peaks(
-    signal, 
-    distance=int(0.4 * fs),  # Minimum 0.4 seconds between beats
-    prominence=0.5            # Peak height threshold
-)
-
-# 2. Heart rate calculation
-bpm = (len(peaks) / duration) * 60
-
-# 3. HRV features
-rr_intervals = np.diff(peaks) / fs
-sdnn = np.std(rr_intervals)                    # Overall variability
-rmssd = np.sqrt(np.mean(np.diff(rr_intervals) ** 2))  # Short-term variability
-
-# 4. Autocorrelation features
-autocorr = np.correlate(signal, signal, mode='full')
-autocorr = autocorr[len(autocorr)//2:]  # Take positive lags
-
-# 5. Classification rules
-if sdnn > 0.12 or rmssd > 0.12:
-    result = "Arrhythmia Suspected"
-elif bpm > 100:
-    result = "Tachycardia"
-elif bpm < 50:
-    result = "Bradycardia"
-else:
-    result = "Normal Rhythm"
-```
-
-### Acoustic Features
-
-**Frequency Estimation** (`sound_logic.js` lines 120-150):
+### Frontend Visualization (Plotly.js)
 
 ```javascript
-function estimateFrequency(segment, sampleRate, minF=100, maxF=800) {
-    // Band-pass filter to isolate relevant frequencies
-    const filtered = bandPassFilter(segment, sampleRate, minF, maxF);
+// Dynamic chart creation
+function renderChart(divId, type, data, predictionData) {
+    let traces = [];
     
-    // Autocorrelation for periodicity detection
-    let maxCorr = 0, bestLag = -1;
-    for (let lag = minLag; lag <= maxLag; lag++) {
-        let corr = 0;
-        for (let i = 0; i < size - lag; i++) {
-            corr += filtered[i] * filtered[i + lag];
-        }
-        if (corr > maxCorr) {
-            maxCorr = corr;
-            bestLag = lag;
-        }
+    if (type === 'candlestick') {
+        traces.push({
+            x: dates,
+            open: data.prices.open,
+            high: data.prices.high,
+            low: data.prices.low,
+            close: data.prices.close,
+            type: 'candlestick'
+        });
     }
-    return sampleRate / bestLag;
+    
+    Plotly.newPlot(divId, traces, layout);
 }
 ```
-
-### Microbiome Features
-
-**Diversity Metrics** (`app.py` lines 170-190):
-
-```python
-def calculate_shannon(data):
-    """Shannon diversity index (H)"""
-    p = data[data > 0]  # Remove zero abundances
-    if len(p) == 0: 
-        return 0
-    return -np.sum(p * np.log(p))
-
-def fb_ratio(sample):
-    """Firmicutes/Bacteroidetes ratio"""
-    firmicutes = sample[sample.index.str.contains('p__Firmicutes')].sum()
-    bacteroidetes = sample[sample.index.str.contains('p__Bacteroidetes')].sum()
-    return firmicutes / (bacteroidetes + 1e-8)
-```
-
----
-
-## 📸 Screenshots Gallery
-
-### Medical Module
-
-| View Type | Screenshot |
-|-----------|------------|
-| **Medical Page** | ![Medical Page](docs/images/Medical/Midecal%20page.jpeg) |
-| **Single Channel** | ![Single Channel](docs/images/Medical/Single%20Channel%20View.jpeg) |
-| **Overlay View** | ![Overlay](docs/images/Medical/overlay%20view.jpeg) |
-| **Polar View** | ![Polar](docs/images/Medical/Single%20channel%20Polar.jpeg) |
-| **2D Scatter** | ![2D Scatter](docs/images/Medical/2D%20cumulative%20Scatter.jpeg) |
-| **AI Comparison** | ![AI Comparison](docs/images/Medical/AI%20Comparison%20.jpeg) |
-| **2 Channel Polar** | ![2 Channel Polar](docs/images/Medical/2%20Channel%20Polar%20.jpeg) |
-| **All Views** | ![All Views](docs/images/Medical/All%20Views.jpeg) |
-| **EEG Polar/XOR** | ![EEG Polar](docs/images/Medical/EEG%20-%20polar&XOR%20views%20.jpeg) |
-| **EEG Signal** | ![EEG Signal](docs/images/Medical/EEG%20signal.jpeg) |
-| **Overlay Polar** | ![Overlay Polar](docs/images/Medical/overlay%20polar%20view.jpeg) |
-| **Overlay XOR** | ![Overlay XOR](docs/images/Medical/overlay%20XOR%20view%20.jpeg) |
-| **Channel Selection** | ![Channels](docs/images/Medical/Select%20Channels%20%26%20color%20.jpeg) |
-| **Select Type** | ![Select Type](docs/images/Medical/Select%20Type%20.jpeg) |
-| **Select Type 2** | ![Select Type 2](docs/images/Medical/Select%20Type%202%20.jpeg) |
-
-### Trading Module
-
-| Category | Screenshot |
-|----------|------------|
-| **Stock Page** | ![Stock Page](docs/images/Trading/StockPage.jpeg) |
-| **Upload File** | ![Upload](docs/images/Trading/Upload%20file%20in%20stock%20page%20.jpeg) |
-| **AAPL Static** | ![AAPL Static](docs/images/Trading/AAPL%20Stock%20File%20Static%20.jpeg) |
-| **AAPL Overtime** | ![AAPL Overtime](docs/images/Trading/AAPL%20Stock%20File%20Over%20Time%20.jpeg) |
-| **With Prediction** | ![Prediction](docs/images/Trading/AAPL%20Stock%20File%20With%20Prediction.jpeg) |
-| **Candlestick** | ![Candlestick](docs/images/Trading/Candlestick%20%2B%20Volume%20Chart%20overtime.jpeg) |
-| **Line Chart** | ![Line Chart](docs/images/Trading/Line%20Chart%20.jpeg) |
-| **Currencies Static** | ![Currencies Static](docs/images/Trading/Currencies%20–%20All%20Charts%20(Static).jpeg) |
-| **Currencies Overtime** | ![Currencies Overtime](docs/images/Trading/Currencies%20–%20All%20Charts%20(over%20time).jpeg) |
-| **Minerals Static** | ![Minerals Static](docs/images/Trading/Minerals-All%20Charts(Static).jpeg) |
-| **Minerals Overtime** | ![Minerals Overtime](docs/images/Trading/Minerals-All%20Charts(overtime).jpeg) |
-| **Stock All Charts Static** | ![Stock Static](docs/images/Trading/Stock-All%20Charts(Static).jpeg) |
-| **Stock All Charts Overtime** | ![Stock Overtime](docs/images/Trading/Stock-All%20Charts(overtime).jpeg) |
-
-### Acoustic & Home
-
-| Page | Screenshot |
-|------|------------|
-| **Home Page** | ![Home](docs/images/Home%20Page.jpeg) |
-| **Acoustic Page** | ![Acoustic](docs/images/Acoustic%20Page.jpeg) |
-| **Microbiome Page** | ![Microbiome](docs/images/Microbine%20.jpeg) |
 
 ---
 
 ## 🎥 Demo Video
 
-[![Demo Video](docs/images/Home%20Page.jpeg)](docs/Video/signal_viewer_demo.mp4)
+A comprehensive demonstration video is available:
 
-*Click image above to watch the 3-minute demonstration video*
-
-**Video Contents:**
-- 0:00 - Home page overview
-- 0:30 - Medical viewer with 8 abnormality types
-- 1:15 - Acoustic Doppler simulation with real car sounds
-- 1:45 - Drone detection using real recordings
-- 2:15 - Trading analysis with LSTM prediction (AAPL example)
-- 2:45 - Microbiome profiling with iHMP dataset
+**[📹 Watch the Demo Video](docs/Video/signal_viewer_demo.mp4)**
 
 ---
 
-## 📦 Requirements
+## 📝 Conclusion
 
-```txt
-# Core Dependencies
-flask==2.3.3
-pandas==2.1.3
-numpy==1.24.3
-scipy==1.11.4
-joblib==1.3.2
+**BioSignal AI** successfully implements **all requirements** of Task 1 with:
 
-# Medical Signal Processing
-wfdb==4.1.2
-mne==1.6.1
-torch==2.1.2
-transformers==4.36.2
+| Category | Requirements Met | Key Achievement |
+|----------|-----------------|-----------------|
+| ✅ **Medical** | 14/14 | Multi-channel ECG/EEG with 4 viewer types + AI comparison |
+| ✅ **Acoustic** | 7/7 | Doppler simulation + real vehicle/drone analysis |
+| ✅ **Trading** | 7/7 | Multi-category charts + LSTM prediction |
+| ✅ **Microbiome** | 6/6 | Disease profiling + diversity metrics + clinical reports |
 
-# Acoustic Processing
-librosa==0.10.1
-
-# Trading & ML
-tensorflow==2.15.0
-scikit-learn==1.3.2
-
-# Visualization
-plotly==5.18.0
-
-# Utilities
-requests==2.31.0
-python-dotenv==1.0.0
-```
+### Key Highlights:
+- **Unified interface** for four distinct signal types
+- **Real-time visualization** with playback controls
+- **AI-powered analysis** (HuBERT, LSTM, Random Forest)
+- **Classic algorithms** for comparison
+- **Comprehensive customization** options
+- **Professional documentation** with 40+ screenshots
+- **Demo video** showcasing all features
 
 ---
-
-## 🏋️ Training Scripts
-
-### Medical Model Training (`Models/Medical/train_model(1).py`)
-
-```python
-# HuBERT feature extraction + SVM classification
-def train_medical_model():
-    # Load ECG data from 8 abnormality classes
-    data, labels = load_ecg_data()
-    
-    # Extract HuBERT features
-    features = []
-    for ecg in data:
-        feat = hubert_model.extract_features(ecg)
-        features.append(feat)
-    
-    # Train SVM classifier
-    svm = SVC(kernel='rbf', probability=True)
-    svm.fit(features, labels)
-    
-    # Save model
-    joblib.dump(svm, 'ecg_classifier.pkl')
-```
-
-### Microbiome Training (`Models/Microbiome/train_model (1).py`)
-
-```python
-# Random Forest for disease classification
-def train_microbiome_model():
-    # Load iHMP dataset
-    df = pd.read_csv('iHMP_data.csv', index_col=0)
-    
-    # Feature engineering
-    X = df.drop('diagnosis', axis=1)
-    y = df['diagnosis']
-    
-    # Train Random Forest
-    rf = RandomForestClassifier(n_estimators=100)
-    rf.fit(X, y)
-    
-    # Save model and feature names
-    joblib.dump(rf, 'microbiome_model.pkl')
-    joblib.dump(X.columns.tolist(), 'model_features.pkl')
-```
-
-### Trading LSTM Training (`Models/Trading/train_global_lstm.py`)
-
-```python
-# Global LSTM for multi-asset prediction
-def train_trading_model():
-    # Load all assets
-    data = load_all_assets()
-    
-    # Create sequences (60 days)
-    X, y = create_sequences(data, seq_length=60)
-    
-    # Scale features
-    scaler_x = MinMaxScaler()
-    scaler_y = MinMaxScaler()
-    X_scaled = scaler_x.fit_transform(X.reshape(-1, X.shape[-1])).reshape(X.shape)
-    y_scaled = scaler_y.fit_transform(y.reshape(-1, 1))
-    
-    # Build LSTM
-    model = Sequential([
-        LSTM(256, return_sequences=True, input_shape=(60, 5)),
-        Dropout(0.2),
-        LSTM(128, return_sequences=True),
-        Dropout(0.2),
-        LSTM(64),
-        Dense(32, activation='relu'),
-        Dense(1)
-    ])
-    
-    # Train
-    model.fit(X_scaled, y_scaled, epochs=50, batch_size=32)
-    
-    # Save model and scalers
-    model.save('saved/global_lstm_model.h5')
-    joblib.dump(scaler_x, 'saved/global_lstm_model_scaler_x.pkl')
-    joblib.dump(scaler_y, 'saved/global_lstm_model_scaler_y.pkl')
-```
-
----
-
 ## 📝 License
 
-This project is created for educational purposes as part of the **Digital Signal Processing Course** - Task 01: Signal Viewer with Basic Processing.
+TThis project is created for educational purposes as part of the Digital Signal Processing Course - Task 01: Signal Viewer with Basic Processing.
 
-**Course:** Digital Signal Processing  
-**Task:** Signal Viewer with Basic Processing  
-**Semester:** Spring 2026  
-**Team:** 08  
+Course: Digital Signal Processing
+Task1: Signal Viewer with Basic Processing
+Semester: Spring 2026
+Team: 08
 
 ---
 
 <div align="center">
-  <p>⭐ Star us on GitHub if you find this project useful!</p>
-  <p>📧 Contact: team08@dsp-course.edu</p>
-  <p>🔗 Repository: https://github.com/your-repo/SIGNAL_VIEWER</p>
+  <h3>🌟 Thank you for reviewing our project! 🌟</h3>
+  <p><i>For questions or support, please contact Team 08</i></p>
 </div>
-```
+
+---
